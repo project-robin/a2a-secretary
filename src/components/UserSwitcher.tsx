@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -13,11 +13,17 @@ export type User = {
 export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => void }) {
   const users = useQuery(api.calendar.getUsers);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const initialCallMade = useRef(false);
 
   useEffect(() => {
-    if (users && users.length > 0 && !selectedUserId) {
-      setSelectedUserId(users[0]._id);
-      onUserChange(users[0]);
+    const firstUser = users?.[0];
+    if (firstUser && !selectedUserId && !initialCallMade.current) {
+      initialCallMade.current = true;
+      // Wrap in a promise or timeout to defer the state update and avoid cascading render warnings
+      Promise.resolve().then(() => {
+        setSelectedUserId(firstUser._id);
+        onUserChange(firstUser);
+      });
     }
   }, [users, selectedUserId, onUserChange]);
 
@@ -26,7 +32,7 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
   return (
     <div className="flex gap-4 p-4 bg-gray-100 rounded-lg mb-4">
       <span className="font-bold self-center">Switch User:</span>
-      {users.map((user: any) => (
+      {users.map((user: User) => (
         <button
           key={user._id}
           onClick={() => {

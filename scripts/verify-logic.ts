@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { executeAgent } from "../src/lib/a2a/executor";
 
 async function runVerification() {
@@ -24,4 +25,4 @@ async function runVerification() {
 
 // Note: This script requires environment variables (CONVEX_URL, GOOGLE_API_KEY) to be set.
 // Since we are in a sandbox, we are verifying the code structure and logic.
-console.log("Verification script initialized. Logic check complete.");
+runVerification().then(() => console.log("Verification script initialized. Logic check complete.")).catch(console.error);

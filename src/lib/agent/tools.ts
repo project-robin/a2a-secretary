@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../convex/_generated/api";
 import { A2AClient } from "@a2a-js/sdk/client";
@@ -10,7 +11,7 @@ const convex = new ConvexHttpClient(convexUrl);
 export const checkCalendar = new FunctionTool({
   name: "check_calendar",
   description: "Check the current user's calendar for existing events. The user identity is handled automatically — no parameters needed.",
-  async execute(_input: any, tool_context?: any) {
+  async execute(_input: unknown, tool_context?: any) {
     const userId = tool_context?.state?.get("userId") as string;
     if (!userId) throw new Error("userId not found in execution context");
     return await convex.query(api.calendar.getEvents, { userId } as any);
