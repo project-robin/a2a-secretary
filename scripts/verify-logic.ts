@@ -9,7 +9,7 @@ async function runVerification() {
   try {
     const localResponse = await executeAgent("alice123", "Book a meeting for tomorrow at 10am for 1 hour.");
     console.log("Alice's Agent Response:", localResponse);
-  } catch (e) {
+  } catch (e: any) {
     console.log("Local booking test (expected to fail without live Convex/API keys):", e.message);
   }
 
@@ -17,7 +17,7 @@ async function runVerification() {
   try {
     const a2aResponse = await executeAgent("alice123", "Schedule a meeting with Bob (http://localhost:3000/api/a2a/bob) for Friday at 3pm.");
     console.log("A2A Negotiation Response:", a2aResponse);
-  } catch (e) {
+  } catch (e: any) {
     console.log("A2A negotiation test (expected to fail without live server/keys):", e.message);
   }
 }

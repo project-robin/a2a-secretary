@@ -122,7 +122,7 @@ export default function Home() {
           <div className="flex-1 overflow-y-auto p-4">
             {events && events.length > 0 ? (
               <div className="space-y-3">
-                {events.map((event) => (
+                {events.map((event: any) => (
                   <div key={event._id} className="p-4 border rounded-lg bg-green-50 border-green-100 shadow-sm">
                     <h3 className="font-bold text-green-900">{event.title}</h3>
                     <p className="text-sm text-green-700">

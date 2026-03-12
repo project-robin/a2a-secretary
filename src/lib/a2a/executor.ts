@@ -1,13 +1,24 @@
-import { Runner } from "@google/adk";
+import { InMemoryRunner, stringifyContent, isFinalResponse } from "@google/adk";
 import { secretaryAgent } from "../agent/definition";
 
-export async function executeAgent(userId: string, message: string) {
-  const runner = new Runner(secretaryAgent);
+export async function executeAgent(userId: string, message: string): Promise<string> {
+  const runner = new InMemoryRunner({
+    agent: secretaryAgent,
+    appName: "PersonalSecretary",
+  });
 
-  // We pass the userId into the tool context via the input if needed,
-  // or handle it by wrapping tools. For this implementation, we'll
-  // assume the agent is instructed to use the provided userId.
+  let finalText = "";
+  const generator = runner.runEphemeral({
+    userId,
+    newMessage: { parts: [{ text: message }] },
+    stateDelta: { userId },
+  });
 
-  const result = await runner.run(`User context: ${userId}. Message: ${message}`);
-  return result.text;
+  for await (const event of generator) {
+    if (isFinalResponse(event)) {
+      finalText = stringifyContent(event);
+    }
+  }
+
+  return finalText || "No response generated.";
 }

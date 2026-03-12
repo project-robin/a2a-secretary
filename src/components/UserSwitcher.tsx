@@ -26,7 +26,7 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
   return (
     <div className="flex gap-4 p-4 bg-gray-100 rounded-lg mb-4">
       <span className="font-bold self-center">Switch User:</span>
-      {users.map((user) => (
+      {users.map((user: any) => (
         <button
           key={user._id}
           onClick={() => {
