@@ -10,11 +10,15 @@ const convex = new ConvexHttpClient(convexUrl);
 
 export const checkCalendar = new FunctionTool({
   name: "check_calendar",
-  description: "Check the current user's calendar for existing events. The user identity is handled automatically — no parameters needed.",
+  description: "Check the current user's calendar for existing events. No parameters needed.",
+  parameters: z.object({}),
   async execute(_input: unknown, tool_context?: any) {
+    console.log("[Tool] check_calendar called");
     const userId = tool_context?.state?.get("userId") as string;
     if (!userId) throw new Error("userId not found in execution context");
-    return await convex.query(api.calendar.getEvents, { userId } as any);
+    const events = await convex.query(api.calendar.getEvents, { userId } as any);
+    console.log(`[Tool] check_calendar found ${events.length} events`);
+    return events;
   },
 });
 
@@ -27,6 +31,7 @@ export const addMeeting = new FunctionTool({
     endTime: z.number().describe("End time as Unix timestamp in milliseconds."),
   }),
   async execute({ title, startTime, endTime }, tool_context?: any) {
+    console.log(`[Tool] add_meeting called: ${title} from ${startTime} to ${endTime}`);
     const userId = tool_context?.state?.get("userId") as string;
     if (!userId) throw new Error("userId not found in execution context");
     await convex.mutation(api.calendar.addEvent, { userId, title, startTime, endTime } as any);
@@ -36,12 +41,13 @@ export const addMeeting = new FunctionTool({
 
 export const contactRemoteAgent = new FunctionTool({
   name: "contact_remote_agent",
-  description: "Contact another user's AI secretary agent to negotiate a meeting on your behalf.",
+  description: "Contact another user's AI agent. Use this for all A2A communication.",
   parameters: z.object({
-    remoteAgentUrl: z.string().describe("Base URL of the remote agent, e.g. http://localhost:3000/api/a2a/bob"),
+    remoteAgentUrl: z.string().describe("The full A2A URL of the remote agent."),
     message: z.string().describe("The message to send to the remote agent."),
   }),
   async execute({ remoteAgentUrl, message }) {
+    console.log(`[Tool] contact_remote_agent to ${remoteAgentUrl}: "${message}"`);
     const client = new A2AClient(remoteAgentUrl);
     const response = await client.sendMessage({
       message: {
@@ -51,6 +57,7 @@ export const contactRemoteAgent = new FunctionTool({
         parts: [{ kind: "text", text: message } as any],
       },
     });
-    return response;
+    console.log(`[Tool] Response from remote agent:`, JSON.stringify(response));
+    return JSON.stringify(response);
   },
 });

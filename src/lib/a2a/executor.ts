@@ -10,13 +10,18 @@ export async function executeAgent(userId: string, message: string): Promise<str
   let finalText = "";
   const generator = runner.runEphemeral({
     userId,
-    newMessage: { parts: [{ text: message }] },
+    newMessage: { role: "user", parts: [{ text: message }] },
     stateDelta: { userId },
   });
 
   for await (const event of generator) {
-    if (isFinalResponse(event)) {
-      finalText = stringifyContent(event);
+    const text = stringifyContent(event);
+    if (text) {
+      finalText += (finalText ? "\n" : "") + text;
+    }
+
+    if (event.errorCode || event.errorMessage) {
+      console.error(`[ADK Error] ${event.errorCode}: ${event.errorMessage}`);
     }
   }
 
