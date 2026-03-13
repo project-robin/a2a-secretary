@@ -1,128 +1,109 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { now } from "./utils";
-
-// Helper to ensure proper 6-char uppercase handles
-function normalizeHandle(handle: string): string {
-  return handle.toUpperCase().trim().slice(0, 6);
-}
 
 export const addContact = mutation({
   args: {
     ownerId: v.id("users"),
-    targetHandle: v.string(), // 6-char handle of the contact to add
+    handle: v.string(),
   },
-  handler: async (ctx: any, args: any) => {
-    const ownerId = args.ownerId;
-    const handle = normalizeHandle(args.targetHandle);
-    if (!handle.match(/^[A-Z0-9]{6}$/)) {
-      throw new Error("Invalid handle format");
-    }
-
-    // Find target user by handle
-    const target = await ctx.db
+  handler: async (ctx, args) => {
+    // 1. Look up target user by handle
+    const targetUser = await ctx.db
       .query("users")
-      .withIndex("by_handle", (q: any) => q.eq("handle", handle))
-      .unique();
-    if (!target) throw new Error("No agent found with this code");
-    if (target._id === ownerId) throw new Error("Cannot add yourself as a contact");
+      .withIndex("by_handle", (q) => q.eq("handle", args.handle))
+      .first();
 
-    // Check existing contact row
-    const existing = await ctx.db
-      .query("contacts")
-      .withIndex("by_owner_contact", (q: any) => q.eq("ownerId", ownerId).eq("contactUserId", target._id))
-      .unique();
-
-    const nowTs = Date.now();
-    if (existing) {
-      // If already exists, ensure status is upgraded if reciprocal exists
-      if (existing.status !== "connected") {
-        // Check reciprocal
-        const reciprocal = await ctx.db
-          .query("contacts")
-          .withIndex("by_owner_contact", (q: any) => q.eq("ownerId", target._id).eq("contactUserId", ownerId))
-          .unique();
-        if (reciprocal) {
-          await ctx.db.patch(existing._id, { status: "connected", createdAt: existing.createdAt || nowTs });
-          if (reciprocal && reciprocal.status !== "connected") {
-            await ctx.db.patch(reciprocal._id, { status: "connected", createdAt: reciprocal.createdAt || nowTs });
-          }
-        } else {
-          // still pending
-          await ctx.db.patch(existing._id, { createdAt: existing.createdAt || nowTs });
-        }
-      }
-      return existing;
+    if (!targetUser) {
+      throw new Error("No agent found with this code");
     }
 
-    // Create new pending contact
-    const contactId = await ctx.db.insert("contacts", {
-      ownerId,
-      contactUserId: target._id,
-      status: "pending",
-      createdAt: nowTs,
+    if (targetUser._id === args.ownerId) {
+      throw new Error("Cannot add yourself as a contact");
+    }
+
+    // 2. Check if contact already exists
+    const existingContact = await ctx.db
+      .query("contacts")
+      .withIndex("by_owner_contact", (q) =>
+        q.eq("ownerId", args.ownerId).eq("contactUserId", targetUser._id)
+      )
+      .first();
+
+    if (existingContact) {
+      return existingContact;
+    }
+
+    // 3. Check if reciprocal exists
+    const reciprocalContact = await ctx.db
+      .query("contacts")
+      .withIndex("by_owner_contact", (q) =>
+        q.eq("ownerId", targetUser._id).eq("contactUserId", args.ownerId)
+      )
+      .first();
+
+    const isMutual = !!reciprocalContact;
+    const status = isMutual ? "connected" : "pending";
+
+    // 4. Insert contact record
+    const newContactId = await ctx.db.insert("contacts", {
+      ownerId: args.ownerId,
+      contactUserId: targetUser._id,
+      status,
+      createdAt: Date.now(),
     });
 
-    // If reciprocal exists, mark both as connected
-    const reciprocal = await ctx.db
-      .query("contacts")
-      .withIndex("by_owner_contact", (q: any) => q.eq("ownerId", target._id).eq("contactUserId", ownerId))
-      .unique();
-    if (reciprocal) {
-      await ctx.db.patch(contactId, { status: "connected" });
-      if (reciprocal.status !== "connected") {
-        await ctx.db.patch(reciprocal._id, { status: "connected" });
-      }
+    // 5. Update reciprocal to connected if it exists
+    if (isMutual) {
+      await ctx.db.patch(reciprocalContact._id, { status: "connected" });
     }
-    return { _id: contactId, ownerId, contactUserId: target._id, status: reciprocal ? "connected" : "pending", createdAt: nowTs };
+
+    return await ctx.db.get(newContactId);
   },
 });
 
 export const getContacts = query({
   args: { ownerId: v.id("users") },
-  handler: async (ctx: any, args: any) => {
-    const ownerId = args.ownerId;
-    const items = await ctx.db
+  handler: async (ctx, args) => {
+    const contacts = await ctx.db
       .query("contacts")
-      .withIndex("by_owner", (q: any) => q.eq("ownerId", ownerId))
+      .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
       .collect();
-    // Populate contact user data
-    const enriched = await Promise.all(
-      items.map(async (c: any) => {
-        const user = await ctx.db.get(c.contactUserId);
+
+    // Join with user data
+    const contactsWithUsers = await Promise.all(
+      contacts.map(async (contact) => {
+        const user = await ctx.db.get(contact.contactUserId);
         return {
-          ...c,
-          contactName: user?.name,
-          contactHandle: user?.handle,
-          agentUrl: user?.agentUrl,
+          ...contact,
+          user,
         };
       })
     );
-    return enriched;
+
+    // Filter out orphaned contacts (if a user was deleted)
+    return contactsWithUsers.filter((c) => c.user !== null);
   },
 });
 
 export const removeContact = mutation({
-  args: { ownerId: v.id("users"), contactUserId: v.id("users") },
-  handler: async (ctx: any, args: any) => {
-    const { ownerId, contactUserId } = args;
-    // Remove both directions if present
-    const existing = await ctx.db
-      .query("contacts")
-      .withIndex("by_owner_contact", (q: any) => q.eq("ownerId", ownerId).eq("contactUserId", contactUserId))
-      .unique();
-    if (existing) await ctx.db.delete("contacts", existing._id);
+  args: { contactId: v.id("contacts") },
+  handler: async (ctx, args) => {
+    const contact = await ctx.db.get(args.contactId);
+    if (!contact) return;
 
-    const reciprocal = await ctx.db
+    // Delete this contact
+    await ctx.db.delete(args.contactId);
+
+    // If reciprocal exists, downgrade to pending
+    const reciprocalContact = await ctx.db
       .query("contacts")
-      .withIndex("by_owner_contact", (q: any) => q.eq("ownerId", contactUserId).eq("contactUserId", ownerId))
-      .unique();
-    if (reciprocal) {
-      // Do not delete reciprocal; just downgrade if needed
-      await ctx.db.patch(reciprocal._id, { status: "pending" });
+      .withIndex("by_owner_contact", (q) =>
+        q.eq("ownerId", contact.contactUserId).eq("contactUserId", contact.ownerId)
+      )
+      .first();
+
+    if (reciprocalContact && reciprocalContact.status === "connected") {
+      await ctx.db.patch(reciprocalContact._id, { status: "pending" });
     }
-    return { ok: true };
   },
 });
-
