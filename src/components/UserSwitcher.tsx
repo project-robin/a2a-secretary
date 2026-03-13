@@ -1,53 +1,137 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { useQuery } from "convex/react";
+import { useUser, useClerk } from "@clerk/nextjs";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Loader2, LogOut, Copy, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export type User = {
   _id: string;
   name: string;
   agentUrl: string;
+  handle: string;
 };
 
 export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => void }) {
-  const users = useQuery(api.calendar.getUsers);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const initialCallMade = useRef(false);
+  const { user: clerkUser, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const [copied, setCopied] = useState(false);
+  const createUser = useMutation(api.calendar.createUserForClerk);
 
+  // Load the current user from Convex via their clerkId
+  const convexUser = useQuery(
+    api.calendar.getByClerkId,
+    clerkUser?.id ? { clerkId: clerkUser.id } : "skip"
+  );
+
+  // Sync user if authenticated but not in Convex
   useEffect(() => {
-    const firstUser = users?.[0];
-    if (firstUser && !selectedUserId && !initialCallMade.current) {
-      initialCallMade.current = true;
-      // Wrap in a promise or timeout to defer the state update and avoid cascading render warnings
-      Promise.resolve().then(() => {
-        setSelectedUserId(firstUser._id);
-        onUserChange(firstUser);
+    if (isLoaded && clerkUser && convexUser === null) {
+      createUser({
+        clerkId: clerkUser.id,
+        name: clerkUser.fullName || clerkUser.firstName || "Anonymous",
+        baseUrl: window.location.origin,
       });
     }
-  }, [users, selectedUserId, onUserChange]);
+  }, [isLoaded, clerkUser, convexUser, createUser]);
 
-  if (!users) return <div>Loading users...</div>;
+  // Notify parent component of current user when loaded
+  useEffect(() => {
+    if (convexUser) {
+      onUserChange(convexUser as any);
+    }
+  }, [convexUser, onUserChange]);
+
+  if (!isLoaded || (clerkUser && convexUser === undefined)) {
+    return (
+      <div className="glass rounded-3xl p-12 flex flex-col items-center justify-center border-dashed border-2 border-stone-200 animate-in fade-in duration-700 max-w-2xl mx-auto">
+        <Loader2 className="w-10 h-10 text-stone-900 animate-spin mb-6" />
+        <h3 className="font-display font-bold text-xl text-stone-900 mb-2">Synchronizing Identity</h3>
+        <p className="text-stone-500 text-center text-sm max-w-sm leading-relaxed mb-4">
+          We&apos;re securely linking your Clerk account with your Zero-Trust Agent workspace in Convex.
+        </p>
+        <div className="bg-stone-100 p-4 rounded-xl w-full text-[10px] font-mono text-stone-400 break-all">
+          <p className="font-bold uppercase mb-1">Troubleshooting Tip:</p>
+          If this hangs, ensure you created a &quot;convex&quot; JWT Template in your Clerk Dashboard.
+        </div>
+      </div>
+    );
+  }
+
+  if (clerkUser && !convexUser) {
+    return (
+      <div className="glass rounded-3xl p-12 flex flex-col items-center justify-center border-dashed border-2 border-amber-200 bg-amber-50/30 animate-in fade-in duration-700 max-w-2xl mx-auto">
+        <Loader2 className="w-10 h-10 text-amber-600 animate-spin mb-6" />
+        <h3 className="font-display font-bold text-xl text-stone-900 mb-2">Finalizing Workspace</h3>
+        <p className="text-stone-500 text-center text-sm max-w-sm leading-relaxed">
+          Your account is created, but your agent is still being provisioned in the background. Please stay on this page.
+        </p>
+      </div>
+    );
+  }
+
+  if (!clerkUser) {
+    return null;
+  }
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(convexUser.handle);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
-    <div className="flex gap-4 p-4 bg-gray-100 rounded-lg mb-4">
-      <span className="font-bold self-center">Switch User:</span>
-      {users.map((user: User) => (
-        <button
-          key={user._id}
-          onClick={() => {
-            setSelectedUserId(user._id);
-            onUserChange(user);
-          }}
-          className={`px-4 py-2 rounded ${
-            selectedUserId === user._id
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-800 border border-gray-300 hover:bg-gray-50"
-          }`}
-        >
-          {user.name}
-        </button>
-      ))}
+    <div className="mb-12 animate-in slide-in-from-top-4 duration-700">
+      <div className="flex items-center gap-3 mb-6 px-2">
+        <div className="h-[1px] flex-1 bg-stone-200" />
+        <span className="font-display font-bold text-[10px] text-stone-400 uppercase tracking-[0.3em]">
+          Active Identity
+        </span>
+        <div className="h-[1px] flex-1 bg-stone-200" />
+      </div>
+
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white border border-stone-200 p-6 rounded-3xl shadow-xl shadow-stone-200/50">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-stone-900 text-white flex items-center justify-center font-display font-bold text-xl shadow-inner">
+            {convexUser.name.charAt(0)}
+          </div>
+          <div className="text-left">
+            <p className="font-display font-bold tracking-tight text-lg text-stone-800">{convexUser.name}</p>
+            <p className="text-xs font-medium text-stone-500">
+              {clerkUser.primaryEmailAddress?.emailAddress}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row items-center gap-4">
+          <div className="bg-stone-50 border border-stone-200 px-6 py-3 rounded-2xl flex flex-col items-center">
+            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">
+              Your Agent Code
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="font-display font-black text-2xl tracking-[0.2em] text-stone-800">
+                {convexUser.handle}
+              </span>
+              <button
+                onClick={handleCopyCode}
+                className="p-2 hover:bg-stone-200 rounded-lg transition-colors text-stone-500"
+                title="Copy code"
+              >
+                {copied ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            onClick={() => signOut()}
+            className="flex items-center gap-2 px-5 py-3 text-sm font-bold text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-all"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

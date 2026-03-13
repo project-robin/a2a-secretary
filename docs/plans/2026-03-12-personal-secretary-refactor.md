@@ -4,7 +4,7 @@
 
 **Goal:** Refactor the Personal Secretary to enforce strict `userId` isolation using the "Zero-Trust LLM" pattern — the LLM never receives or is trusted with internal user IDs; identity is injected into ADK State by the server layer and retrieved by tools via `tool_context`.
 
-**Architecture:** Three independent layers: (1) Agent Logic & Tools — remove userId from tool schemas, read from context state instead; (2) Server/A2A Gateway — inject userId into Runner state from URL/request, not from model output; (3) Convex Data — tighten type safety and ensure all queries are userId-scoped. All use `gemini-2.0-flash`.
+**Architecture:** Three independent layers: (1) Agent Logic & Tools — remove userId from tool schemas, read from context state instead; (2) Server/A2A Gateway — inject userId into Runner state from URL/request, not from model output; (3) Convex Data — tighten type safety and ensure all queries are userId-scoped. All use `gemini-2.5-flash`.
 
 **Tech Stack:** Next.js 16 App Router, @google/adk (LlmAgent, InMemoryRunner, FunctionTool), @a2a-js/sdk v0.3.0 (A2AClient from @a2a-js/sdk/client), Convex (schema, queries, mutations), Gemini 2.0 Flash.
 

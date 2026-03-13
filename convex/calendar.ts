@@ -9,6 +9,10 @@ import { v } from "convex/values";
  * `any` to satisfy the compiler while maintaining the required logic.
  */
 
+function generateHandle(): string {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 export const getEvents = query({
   args: { userId: v.id("users") },
   handler: async (ctx: any, args: any) => {
@@ -43,19 +47,102 @@ export const getUsers = query({
   },
 });
 
+export const getUserByName = query({
+  args: { name: v.string() },
+  handler: async (ctx: any, args: any) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_name", (q: any) => q.eq("name", args.name))
+      .unique();
+  },
+});
+
+export const getById = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx: any, args: any) => {
+    return await ctx.db.get(args.userId);
+  },
+});
+
+export const getByClerkId = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx: any, args: any) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q: any) => q.eq("clerkId", args.clerkId))
+      .unique();
+  },
+});
+
+export const getByHandle = query({
+  args: { handle: v.string() },
+  handler: async (ctx: any, args: any) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_handle", (q: any) => q.eq("handle", args.handle.toUpperCase()))
+      .unique();
+  },
+});
+
+export const createUserForClerk = mutation({
+  args: {
+    clerkId: v.string(),
+    name: v.string(),
+    baseUrl: v.string(),
+  },
+  handler: async (ctx: any, { clerkId, name, baseUrl }: any) => {
+    // Idempotency: return existing user if already created
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_clerkId", (q: any) => q.eq("clerkId", clerkId))
+      .unique();
+    if (existing) return existing._id;
+
+    // Generate a unique 6-char handle
+    let handle = generateHandle();
+    while (
+      await ctx.db
+        .query("users")
+        .withIndex("by_handle", (q: any) => q.eq("handle", handle))
+        .unique()
+    ) {
+      handle = generateHandle();
+    }
+
+    const userId = await ctx.db.insert("users", {
+      name,
+      clerkId,
+      handle,
+      agentUrl: "", // placeholder until we have the ID
+    });
+
+    // Update agentUrl with the actual Convex ID
+    await ctx.db.patch(userId, { agentUrl: `${baseUrl}/api/a2a/${userId}` });
+
+    return userId;
+  },
+});
+
 export const seedUsers = mutation({
   args: {},
   handler: async (ctx: any) => {
     const existingUsers = await ctx.db.query("users").collect();
     if (existingUsers.length === 0) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
       const aliceId = await ctx.db.insert("users", {
         name: "Alice",
-        agentUrl: "http://localhost:3000/api/a2a/alice",
+        handle: "ALICE1",
+        agentUrl: "placeholder",
       });
+      await ctx.db.patch(aliceId, { agentUrl: `${baseUrl}/api/a2a/${aliceId}` });
+
       const bobId = await ctx.db.insert("users", {
         name: "Bob",
-        agentUrl: "http://localhost:3000/api/a2a/bob",
+        handle: "BOB001",
+        agentUrl: "placeholder",
       });
+      await ctx.db.patch(bobId, { agentUrl: `${baseUrl}/api/a2a/${bobId}` });
+
       return { aliceId, bobId };
     }
   },

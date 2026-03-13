@@ -39,3 +39,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Agent configs
+.agent/
+.agents/
+.claude/
+.codex/
+.gemini/
+.kilocode/
+.opencode/
+
+# Debug images
+*.png
+
+# Scripts (temporary)
+scripts/
+deepwiki-cli.py
+CLAUDE.md

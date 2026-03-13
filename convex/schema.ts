@@ -5,7 +5,12 @@ export default defineSchema({
   users: defineTable({
     name: v.string(),
     agentUrl: v.string(),
-  }).index("by_name", ["name"]),
+    clerkId: v.optional(v.string()),
+    handle: v.optional(v.string()),
+  })
+    .index("by_name", ["name"])
+    .index("by_clerkId", ["clerkId"])
+    .index("by_handle", ["handle"]),
   calendarEvents: defineTable({
     userId: v.id("users"),
     title: v.string(),

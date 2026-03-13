@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-12
 **Status:** Approved
-**Goal:** Refactor the existing Personal Secretary implementation to ensure strict `userId` isolation using the "Zero-Trust LLM" pattern, update to `gemini-2.0-flash`, and improve library usage.
+**Goal:** Refactor the existing Personal Secretary implementation to ensure strict `userId` isolation using the "Zero-Trust LLM" pattern, update to `gemini-2.5-flash`, and improve library usage.
 
 ## 1. Architectural Principles
 
@@ -17,7 +17,7 @@
 - **Design**:
     - Refactor `FunctionTool` definitions to remove `userId` from `parameters`.
     - In the `execute` handler, retrieve `userId` using `tool_context.state.get("userId")`.
-    - Update `LlmAgent` to use `gemini-2.0-flash`.
+    - Update `LlmAgent` to use `gemini-2.5-flash`.
     - Ensure instructions guide the agent to coordinate but not expose internal IDs.
 
 ### Layer 2: Server & A2A Gateway (Gatekeeper Agent)

@@ -90,7 +90,7 @@ Create `src/lib/agent/tools.ts` with:
 
 **Step 2: Define LlmAgent**
 In `src/lib/agent/definition.ts`:
-- Instantiate `LlmAgent` with `gemini-2.0-flash`.
+- Instantiate `LlmAgent` with `gemini-2.5-flash`.
 - Bind the tools from `tools.ts`.
 
 **Step 3: Commit**

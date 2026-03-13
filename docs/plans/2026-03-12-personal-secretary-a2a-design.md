@@ -9,7 +9,7 @@ A multi-user personal secretary application where each user has an AI agent capa
 
 ## 2. Architecture
 - **Framework:** Next.js 16 (App Router) using React 19 features.
-- **AI Agent:** Google ADK (`@google/adk`) powered by `gemini-2.0-flash`.
+- **AI Agent:** Google ADK (`@google/adk`) powered by `gemini-2.5-flash`.
 - **Interoperability:** A2A Protocol (`@a2a-js/sdk` v0.3.0).
 - **Database:** Convex for persistent storage of user profiles and calendar events.
 - **Runtime:** Node.js/Edge via Next.js Route Handlers.

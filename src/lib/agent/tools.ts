@@ -2,19 +2,19 @@
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../convex/_generated/api";
 import { A2AClient } from "@a2a-js/sdk/client";
-import { FunctionTool } from "@google/adk";
+import { tool } from "ai";
 import { z } from "zod";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://placeholder-url.convex.cloud";
 const convex = new ConvexHttpClient(convexUrl);
 
-export const checkCalendar = new FunctionTool({
-  name: "check_calendar",
+export const checkCalendar = tool({
   description: "Check the current user's calendar for existing events. No parameters needed.",
-  parameters: z.object({}),
-  async execute(_input: unknown, tool_context?: any) {
+  inputSchema: z.object({}),
+  execute: async (_input, { experimental_context }) => {
     console.log("[Tool] check_calendar called");
-    const userId = tool_context?.state?.get("userId") as string;
+    const context = experimental_context as { userId?: string } | undefined;
+    const userId = context?.userId;
     if (!userId) throw new Error("userId not found in execution context");
     const events = await convex.query(api.calendar.getEvents, { userId } as any);
     console.log(`[Tool] check_calendar found ${events.length} events`);
@@ -22,33 +22,51 @@ export const checkCalendar = new FunctionTool({
   },
 });
 
-export const addMeeting = new FunctionTool({
-  name: "add_meeting",
+export const addMeeting = tool({
   description: "Add a meeting to the current user's calendar.",
-  parameters: z.object({
+  inputSchema: z.object({
     title: z.string().describe("Title of the meeting."),
     startTime: z.number().describe("Start time as Unix timestamp in milliseconds."),
     endTime: z.number().describe("End time as Unix timestamp in milliseconds."),
   }),
-  async execute({ title, startTime, endTime }, tool_context?: any) {
-    console.log(`[Tool] add_meeting called: ${title} from ${startTime} to ${endTime}`);
-    const userId = tool_context?.state?.get("userId") as string;
-    if (!userId) throw new Error("userId not found in execution context");
-    await convex.mutation(api.calendar.addEvent, { userId, title, startTime, endTime } as any);
-    return "Meeting added successfully.";
+  execute: async ({ title, startTime, endTime }, { experimental_context }) => {
+    console.log(`[Tool] add_meeting called: "${title}" from ${startTime} to ${endTime}`);
+    const context = experimental_context as { userId?: string } | undefined;
+    const userId = context?.userId;
+    if (!userId) {
+        console.error("[Tool] add_meeting FAILED: userId not found in context");
+        throw new Error("userId not found in execution context");
+    }
+
+    try {
+        console.log(`[Tool] Executing Convex mutation for user ${userId}...`);
+        await convex.mutation(api.calendar.addEvent, { userId, title, startTime, endTime } as any);
+        console.log("[Tool] Convex mutation SUCCESS");
+        return "Meeting added successfully.";
+    } catch (error) {
+        console.error("[Tool] Convex mutation FAILED:", error);
+        return `Failed to add meeting: ${error instanceof Error ? error.message : String(error)}`;
+    }
   },
 });
 
-export const contactRemoteAgent = new FunctionTool({
-  name: "contact_remote_agent",
+export const contactRemoteAgent = tool({
   description: "Contact another user's AI agent. Use this for all A2A communication.",
-  parameters: z.object({
+  inputSchema: z.object({
     remoteAgentUrl: z.string().describe("The full A2A URL of the remote agent."),
     message: z.string().describe("The message to send to the remote agent."),
   }),
-  async execute({ remoteAgentUrl, message }) {
-    console.log(`[Tool] contact_remote_agent to ${remoteAgentUrl}: "${message}"`);
-    const client = new A2AClient(remoteAgentUrl);
+  execute: async ({ remoteAgentUrl, message }) => {
+    const trimmedUrl = remoteAgentUrl.replace(/\/+$/, "");
+    const baseUrl = trimmedUrl.endsWith("/jsonrpc")
+      ? trimmedUrl.slice(0, -"/jsonrpc".length)
+      : trimmedUrl.endsWith("/.well-known/agent.json")
+        ? trimmedUrl.slice(0, -"/.well-known/agent.json".length)
+        : trimmedUrl.endsWith("/.well-known/agent-card.json")
+          ? trimmedUrl.slice(0, -"/.well-known/agent-card.json".length)
+          : trimmedUrl;
+    console.log(`[Tool] contact_remote_agent to ${baseUrl}: "${message}"`);
+    const client = new A2AClient(baseUrl);
     const response = await client.sendMessage({
       message: {
         kind: "message",
@@ -59,5 +77,20 @@ export const contactRemoteAgent = new FunctionTool({
     });
     console.log(`[Tool] Response from remote agent:`, JSON.stringify(response));
     return JSON.stringify(response);
+  },
+});
+
+export const resolveContactUrl = tool({
+  description: "Resolve a user's 6-character short code (handle) to their official A2A agent URL. YOU MUST CALL THIS before 'contact_remote_agent' if you don't have a valid HTTP URL.",
+  inputSchema: z.object({
+    handle: z.string().describe("The 6-character code shared by the user (e.g. XK9MP2)."),
+  }),
+  execute: async ({ handle }) => {
+    console.log(`[Tool] resolve_contact_url called for handle: ${handle}`);
+    const user = await convex.query(api.calendar.getByHandle, { handle });
+    if (!user) return { error: `No user found with code ${handle}` };
+
+    // Zero-Trust: Strip internal IDs before returning to LLM
+    return { name: (user as any).name, agentUrl: (user as any).agentUrl };
   },
 });
