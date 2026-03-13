@@ -9,6 +9,7 @@
  */
 
 import type * as calendar from "../calendar.js";
+import type * as contacts from "../contacts.js";
 
 import type {
   ApiFromModules,
@@ -18,6 +19,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   calendar: typeof calendar;
+  contacts: typeof contacts;
 }>;
 
 /**
