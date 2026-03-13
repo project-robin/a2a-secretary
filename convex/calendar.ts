@@ -143,7 +143,7 @@ export const seedUsers = mutation({
   handler: async (ctx: any) => {
     const existingUsers = await ctx.db.query("users").collect();
     if (existingUsers.length === 0) {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
       const aliceId = await ctx.db.insert("users", {
         name: "Alice",
         handle: "ALICE1",

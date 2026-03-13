@@ -18,7 +18,7 @@ export async function GET(
     const user = await convex.query(api.calendar.getById, { userId });
     if (!user) return new NextResponse("Not Found", { status: 404 });
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
     const jsonrpcUrl = `${baseUrl}/api/a2a/${userId}/jsonrpc`;
     return NextResponse.json({
       name: `${user.name}'s Secretary`,

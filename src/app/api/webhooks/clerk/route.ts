@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       || email_addresses?.[0]?.email_address?.split("@")[0]
       || "Agent";
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
 
     await convex.mutation(api.calendar.createUserForClerk, {
       clerkId: id,
