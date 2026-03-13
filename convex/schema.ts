@@ -17,4 +17,14 @@ export default defineSchema({
     startTime: v.number(),
     endTime: v.number(),
   }).index("by_user", ["userId"]),
+
+  contacts: defineTable({
+    ownerId: v.id("users"),       // The user who added the contact
+    contactUserId: v.id("users"), // The user being added
+    status: v.string(),           // "pending" | "connected"
+    createdAt: v.number(),        // Timestamp
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_owner_contact", ["ownerId", "contactUserId"])
+    .index("by_contact", ["contactUserId"])
 });
