@@ -64,24 +64,47 @@ export const addContact = mutation({
 export const getContacts = query({
   args: { ownerId: v.id("users") },
   handler: async (ctx, args) => {
-    const contacts = await ctx.db
+    // 1. Outbound contacts (added by the user)
+    const outbound = await ctx.db
       .query("contacts")
       .withIndex("by_owner", (q) => q.eq("ownerId", args.ownerId))
       .collect();
 
-    // Join with user data
-    const contactsWithUsers = await Promise.all(
-      contacts.map(async (contact) => {
+    // 2. Inbound pending contacts (added by others, but user hasn't added back)
+    const inbound = await ctx.db
+      .query("contacts")
+      .withIndex("by_contact", (q) => q.eq("contactUserId", args.ownerId))
+      .filter((q) => q.eq(q.field("status"), "pending"))
+      .collect();
+
+    // Join with user data for outbound
+    const outboundWithUsers = await Promise.all(
+      outbound.map(async (contact) => {
         const user = await ctx.db.get(contact.contactUserId);
         return {
           ...contact,
+          isIncoming: false,
           user,
         };
       })
     );
 
-    // Filter out orphaned contacts (if a user was deleted)
-    return contactsWithUsers.filter((c) => c.user !== null);
+    // Join with user data for inbound
+    const inboundWithUsers = await Promise.all(
+      inbound.map(async (contact) => {
+        const user = await ctx.db.get(contact.ownerId);
+        return {
+          ...contact,
+          isIncoming: true,
+          user,
+        };
+      })
+    );
+
+    // Combine and filter out orphaned contacts
+    return [...outboundWithUsers, ...inboundWithUsers]
+      .filter((c) => c.user !== null)
+      .sort((a, b) => b.createdAt - a.createdAt);
   },
 });
 

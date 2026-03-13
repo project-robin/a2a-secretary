@@ -84,22 +84,54 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
                 <div className="text-xs text-gray-500 font-mono mt-0.5">{contact.user!.handle}</div>
               </div>
               <div className="flex items-center gap-3">
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                  contact.status === 'connected'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {contact.status === 'connected' ? 'Connected ✓' : 'Pending ⏳'}
-                </span>
-                <button
-                  onClick={() => removeContact({ contactId: contact._id })}
-                  className="text-gray-400 hover:text-red-600 transition-colors"
-                  title="Remove contact"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {contact.isIncoming ? (
+                  <>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Received 📥
+                    </span>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await addContact({ ownerId: userId, handle: contact.user!.handle! });
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : "Failed to approve contact.");
+                        }
+                      }}
+                      className="px-2 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700 transition-colors"
+                      title="Approve request"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => removeContact({ contactId: contact._id })}
+                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      title="Decline request"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      contact.status === 'connected'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {contact.status === 'connected' ? 'Connected ✓' : 'Pending ⏳'}
+                    </span>
+                    <button
+                      onClick={() => removeContact({ contactId: contact._id })}
+                      className="text-gray-400 hover:text-red-600 transition-colors"
+                      title="Remove contact"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))
