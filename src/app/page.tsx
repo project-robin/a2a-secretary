@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { User, UserSwitcher } from "@/components/UserSwitcher";
+import ContactsPanel from "@/components/ContactsPanel";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import {
   Calendar as CalendarIcon,
@@ -139,6 +140,12 @@ export default function Home() {
             setCurrentUser(user);
             setMessages([]);
           }} />
+
+          {currentUser && (
+            <div className="max-w-md mb-8">
+              <ContactsPanel userId={currentUser._id as any} />
+            </div>
+          )}
 
           {currentUser && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in zoom-in-95 duration-700">
