@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useQuery, Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { User, UserSwitcher } from "@/components/UserSwitcher";
@@ -23,6 +23,16 @@ export default function Home() {
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleUserChange = useCallback((user: User) => {
+    setCurrentUser((prev) => prev?._id === user._id ? prev : user);
+  }, []);
+
+  useEffect(() => {
+    if (currentUser) {
+      setMessages([]);
+    }
+  }, [currentUser]);
 
   const events = useQuery(
     api.calendar.getEvents,
@@ -136,10 +146,7 @@ export default function Home() {
         </Unauthenticated>
 
         <Authenticated>
-          <UserSwitcher onUserChange={(user) => {
-            setCurrentUser(user);
-            setMessages([]);
-          }} />
+          <UserSwitcher onUserChange={handleUserChange} />
 
           {currentUser && (
             <div className="max-w-md mb-8">
