@@ -2,7 +2,12 @@ import { ToolLoopAgent } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
 import { checkCalendar, addMeeting, contactRemoteAgent, resolveContactUrl } from "./tools";
 
-export const secretaryAgent = new ToolLoopAgent({
+// Define call options type for dynamic context injection
+interface SecretaryCallOptions {
+  userId: string;
+}
+
+export const secretaryAgent = new ToolLoopAgent<SecretaryCallOptions>({
   model: openrouter("openrouter/healer-alpha"),
   instructions: `ACT AS A HEADLESS API.
 
@@ -23,4 +28,9 @@ DO NOT GREET. DO NOT TALK. ONLY CALL TOOLS.`,
     contact_remote_agent: contactRemoteAgent,
     resolve_contact_url: resolveContactUrl,
   },
+  // Inject userId from options into experimental_context for tool access
+  prepareCall: ({ options, ...rest }) => ({
+    ...rest,
+    experimental_context: { userId: options.userId },
+  }),
 });
