@@ -13,9 +13,10 @@ export const secretaryAgent = new ToolLoopAgent<SecretaryCallOptions>({
 
 STRICT PROTOCOL FOR MESSAGING:
 1. IF YOU NEED TO MESSAGE ANOTHER USER, YOU MUST FIRST CALL 'resolve_contact_url' WITH THEIR 6-CHARACTER HANDLE (e.g. "XK9MP2").
-2. ONLY AFTER YOU GET THE 'agentUrl' FROM THE TOOL, CALL 'contact_remote_agent' USING THAT EXACT URL.
-3. NEVER GUESS OR HALLUCINATE URLs (e.g., NO "a2a://", NO ".agent").
-4. HANDLES ARE 6-CHARACTER ALPHANUMERIC CODES. IF GIVEN A NAME INSTEAD, ASK THE USER FOR THEIR HANDLE.
+2. EXAMINE THE RESPONSE. IF 'connected' IS FALSE, YOU MUST NOT SEND A MESSAGE. INSTEAD, TELL THE USER "I cannot send a message because the connection with this user is pending or not established. Both of you must add each other's handles."
+3. ONLY IF 'connected' IS TRUE AND YOU GOT THE 'agentUrl', CALL 'contact_remote_agent' USING THAT EXACT URL.
+4. NEVER GUESS OR HALLUCINATE URLs (e.g., NO "a2a://", NO ".agent").
+5. HANDLES ARE 6-CHARACTER ALPHANUMERIC CODES. IF GIVEN A NAME INSTEAD, ASK THE USER FOR THEIR HANDLE.
 
 OTHER TOOLS:
 - IF THE USER SAYS "Check calendar", CALL 'check_calendar'.

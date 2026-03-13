@@ -85,12 +85,27 @@ export const resolveContactUrl = tool({
   inputSchema: z.object({
     handle: z.string().describe("The 6-character code shared by the user (e.g. XK9MP2)."),
   }),
-  execute: async ({ handle }) => {
+  execute: async ({ handle }, { experimental_context }) => {
     console.log(`[Tool] resolve_contact_url called for handle: ${handle}`);
-    const user = await convex.query(api.calendar.getByHandle, { handle });
-    if (!user) return { error: `No user found with code ${handle}` };
+
+    const context = experimental_context as { userId?: string } | undefined;
+    const userId = context?.userId;
+    if (!userId) throw new Error("userId not found in execution context");
+
+    const targetUser = await convex.query(api.calendar.getByHandle, { handle });
+    if (!targetUser) return { error: `No user found with code ${handle}` };
+
+    // Check mutual connection
+    const contacts = await convex.query(api.contacts.getContacts, { ownerId: userId as any });
+    const contact = contacts.find((c: any) => c.contactUserId === targetUser._id);
+
+    const isConnected = contact?.status === "connected";
 
     // Zero-Trust: Strip internal IDs before returning to LLM
-    return { name: (user as any).name, agentUrl: (user as any).agentUrl };
+    return {
+      name: (targetUser as any).name,
+      agentUrl: (targetUser as any).agentUrl,
+      connected: isConnected
+    };
   },
 });
