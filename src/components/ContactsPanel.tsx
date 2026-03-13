@@ -28,8 +28,8 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
     try {
       await addContact({ ownerId: userId, handle: code });
       setHandleCode("");
-    } catch (err: any) {
-      setError(err.message || "Failed to add contact.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add contact.");
     } finally {
       setIsAdding(false);
     }
@@ -74,7 +74,7 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
       <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
         {contacts.length === 0 ? (
           <div className="p-6 text-center text-sm text-gray-500">
-            No contacts yet. Add someone's 6-character code above to connect!
+            No contacts yet. Add someone&apos;s 6-character code above to connect!
           </div>
         ) : (
           contacts.map((contact) => (
