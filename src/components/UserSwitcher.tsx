@@ -3,11 +3,12 @@
 import { useUser, useClerk } from "@clerk/nextjs";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
 import { Loader2, LogOut, Copy, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export type User = {
-  _id: string;
+  _id: Id<"users">;
   name: string;
   agentUrl: string;
   handle: string;
@@ -38,8 +39,8 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
 
   // Notify parent component of current user when loaded
   useEffect(() => {
-    if (convexUser) {
-      onUserChange(convexUser as any);
+    if (convexUser && typeof convexUser === "object" && "_id" in convexUser && "name" in convexUser && "agentUrl" in convexUser && "handle" in convexUser) {
+      onUserChange(convexUser as User);
     }
   }, [convexUser, onUserChange]);
 

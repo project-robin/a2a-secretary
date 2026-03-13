@@ -16,6 +16,17 @@ import {
   Loader2
 } from "lucide-react";
 
+import { Id } from "../../convex/_generated/dataModel";
+
+type CalendarEvent = {
+  _id: Id<"calendarEvents">;
+  _creationTime: number;
+  userId: Id<"users">;
+  title: string;
+  startTime: number;
+  endTime: number;
+};
+
 export default function Home() {
   const { isLoaded: clerkLoaded, isSignedIn: clerkSignedIn } = useUser();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -36,7 +47,7 @@ export default function Home() {
 
   const events = useQuery(
     api.calendar.getEvents,
-    currentUser ? { userId: currentUser._id as any } : "skip"
+    currentUser ? { userId: currentUser._id } : "skip"
   );
 
   useEffect(() => {
@@ -150,7 +161,7 @@ export default function Home() {
 
           {currentUser && (
             <div className="max-w-md mb-8">
-              <ContactsPanel userId={currentUser._id as any} />
+              <ContactsPanel userId={currentUser._id} />
             </div>
           )}
 
@@ -249,7 +260,7 @@ export default function Home() {
               <div className="flex-1 overflow-y-auto p-8">
                 {events && events.length > 0 ? (
                   <div className="space-y-4">
-                    {events.map((event: any) => (
+                    {events.map((event: CalendarEvent) => (
                       <div
                         key={event._id}
                         className="group p-6 bg-white border border-stone-100 rounded-[2rem] hover:shadow-xl hover:shadow-stone-200/50 transition-all duration-500 hover:-translate-y-1"

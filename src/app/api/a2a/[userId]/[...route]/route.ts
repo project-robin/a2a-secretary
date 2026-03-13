@@ -13,7 +13,7 @@ export async function GET(
 
   const path = route.join("/");
   if (path === ".well-known/agent-card.json" || path === ".well-known/agent.json") {
-    const user = await convex.query(api.calendar.getById, { userId } as any);
+    const user = await convex.query(api.calendar.getById, { userId });
     if (!user) return new NextResponse("Not Found", { status: 404 });
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -39,7 +39,7 @@ export async function POST(
 
   if (route.join("/") === "jsonrpc") {
     // userId in the URL IS the Convex ID — no name resolution needed
-    const user = await convex.query(api.calendar.getById, { userId } as any);
+    const user = await convex.query(api.calendar.getById, { userId });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -49,7 +49,7 @@ export async function POST(
     if (body.method === "message/send") {
       const incomingMessage = body.params.message;
       const text = incomingMessage.parts
-        .map((p: any) => p.text || "")
+        .map((p: { text?: string }) => p.text || "")
         .join("\n")
         .trim();
 
