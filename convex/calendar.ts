@@ -123,6 +123,21 @@ export const createUserForClerk = mutation({
   },
 });
 
+export const fixSeededUsers = mutation({
+  args: {},
+  handler: async (ctx: any) => {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
+    const users = await ctx.db.query("users").collect();
+    for (const user of users) {
+      if (user.name === "Alice" || user.name === "Bob") {
+        await ctx.db.patch(user._id, {
+          agentUrl: `${baseUrl}/api/a2a/${user._id}`,
+        });
+      }
+    }
+  },
+});
+
 export const seedUsers = mutation({
   args: {},
   handler: async (ctx: any) => {
