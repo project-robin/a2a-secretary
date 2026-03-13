@@ -6,6 +6,8 @@ import { api } from "../../../../convex/_generated/api";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const { userId: clerkId } = await auth();
   if (!clerkId) {

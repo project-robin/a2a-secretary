@@ -5,6 +5,8 @@ import { api } from "../../../../../../convex/_generated/api";
 
 const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
+export const maxDuration = 60;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string; route: string[] }> }
@@ -60,10 +62,12 @@ export async function POST(
       return NextResponse.json({
         jsonrpc: "2.0",
         result: {
-          kind: "message",
-          role: "agent",
-          messageId: crypto.randomUUID(),
-          parts: [{ kind: "text", text: result }],
+          message: {
+            kind: "message",
+            role: "agent",
+            messageId: crypto.randomUUID(),
+            parts: [{ kind: "text", text: result }],
+          }
         },
         id: body.id,
       });
