@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useQuery, Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { useQuery, useMutation, Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { User, UserSwitcher } from "@/components/UserSwitcher";
 import ContactsPanel from "@/components/ContactsPanel";
@@ -31,7 +31,8 @@ export default function Home() {
   const { isLoaded: clerkLoaded, isSignedIn: clerkSignedIn } = useUser();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
+  const messages = useQuery(api.messages.list, currentUser ? { userId: currentUser._id } : "skip") || [];
+  const sendMessage = useMutation(api.messages.send);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -43,11 +44,6 @@ export default function Home() {
     setCurrentUser((prev) => prev?._id === user._id ? prev : user);
   }, []);
 
-  useEffect(() => {
-    if (currentUser) {
-      setMessages([]);
-    }
-  }, [currentUser]);
 
   const events = useQuery(
     api.calendar.getEvents,
@@ -71,10 +67,11 @@ export default function Home() {
     const userMessage = input;
     setInput("");
     setShowMentions(false);
-    setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
     setLoading(true);
 
     try {
+      await sendMessage({ userId: currentUser._id, role: "user", text: userMessage });
+
       // Extract mentioned contacts from the message
       const mentionedContacts = [];
       if (contacts) {
@@ -90,7 +87,7 @@ export default function Home() {
         }
       }
 
-      const response = await fetch("/api/chat", {
+      await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,11 +96,10 @@ export default function Home() {
           mentionedContacts
         }),
       });
-      const data = await response.json();
-      setMessages((prev) => [...prev, { role: "assistant", text: data.text }]);
+      // The assistant's response is inserted by the server.
     } catch (error) {
       console.error("Chat error:", error);
-      setMessages((prev) => [...prev, { role: "assistant", text: "Communication failure. Check your API quota or network." }]);
+      await sendMessage({ userId: currentUser._id, role: "assistant", text: "Communication failure. Check your API quota or network." });
     } finally {
       setLoading(false);
     }

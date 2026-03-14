@@ -27,5 +27,11 @@ export default defineSchema({
   })
     .index("by_owner", ["ownerId"])
     .index("by_owner_contact", ["ownerId", "contactUserId"])
-    .index("by_contact", ["contactUserId"])
+    .index("by_contact", ["contactUserId"]),
+
+  messages: defineTable({
+    userId: v.id("users"),
+    role: v.string(), // "user" | "assistant" | "remote_agent"
+    text: v.string(),
+  }).index("by_user", ["userId"]),
 });

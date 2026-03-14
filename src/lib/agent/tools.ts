@@ -61,7 +61,7 @@ export const contactRemoteAgent = tool({
     remoteAgentUrl: z.string().describe("The full A2A URL of the remote agent."),
     message: z.string().describe("The message to send to the remote agent."),
   }),
-  execute: async ({ remoteAgentUrl, message }) => {
+  execute: async ({ remoteAgentUrl, message }, { experimental_context }) => {
     const trimmedUrl = remoteAgentUrl.replace(/\/+$/, "");
     const baseUrl = trimmedUrl.endsWith("/jsonrpc")
       ? trimmedUrl.slice(0, -"/jsonrpc".length)
@@ -71,6 +71,19 @@ export const contactRemoteAgent = tool({
           ? trimmedUrl.slice(0, -"/.well-known/agent-card.json".length)
           : trimmedUrl;
     console.log(`[Tool] contact_remote_agent to ${baseUrl}: "${message}"`);
+
+    // Attempt to log the message locally if we have the userId
+    const context = experimental_context as { userId?: string } | undefined;
+    const userId = context?.userId;
+    if (userId) {
+      const convex = getConvexClient();
+      await convex.mutation(api.messages.send, {
+        userId: userId as any,
+        role: "assistant", // Using assistant role but prefixing to show it's outgoing
+        text: `[Sending to remote agent]: ${message}`,
+      });
+    }
+
     const client = new A2AClient(baseUrl);
     const response = await client.sendMessage({
       message: {

@@ -26,5 +26,13 @@ export async function POST(request: NextRequest) {
   }
 
   const text = await executeAgent(user._id, message, mentionedContacts);
+
+  // Save the assistant's reply to the database
+  await convex.mutation(api.messages.send, {
+    userId: user._id,
+    role: "assistant",
+    text,
+  });
+
   return NextResponse.json({ text });
 }

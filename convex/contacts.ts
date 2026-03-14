@@ -55,6 +55,25 @@ export const upsertExternalContact = internalMutation({
       createdAt: Date.now(),
     });
 
+    // Auto-create reciprocal contact so targetUser sees the connection too
+    const reciprocalContact = await ctx.db
+      .query("contacts")
+      .withIndex("by_owner_contact", (q) =>
+        q.eq("ownerId", targetUser!._id).eq("contactUserId", args.ownerId)
+      )
+      .first();
+
+    if (!reciprocalContact) {
+      await ctx.db.insert("contacts", {
+        ownerId: targetUser._id,
+        contactUserId: args.ownerId,
+        status: "connected",
+        createdAt: Date.now(),
+      });
+    } else if (reciprocalContact.status !== "connected") {
+      await ctx.db.patch(reciprocalContact._id, { status: "connected" });
+    }
+
     return await ctx.db.get(newContactId);
   },
 });
@@ -143,8 +162,8 @@ export const addContact = mutation({
       )
       .first();
 
-    const isMutual = !!reciprocalContact;
-    const status = isMutual ? "connected" : "pending";
+    // Auto-accept request: status is always "connected"
+    const status = "connected";
 
     // 4. Insert contact record
     const newContactId = await ctx.db.insert("contacts", {
@@ -154,9 +173,18 @@ export const addContact = mutation({
       createdAt: Date.now(),
     });
 
-    // 5. Update reciprocal to connected if it exists
-    if (isMutual) {
-      await ctx.db.patch(reciprocalContact._id, { status: "connected" });
+    // 5. Update or create reciprocal as connected
+    if (reciprocalContact) {
+      if (reciprocalContact.status !== "connected") {
+        await ctx.db.patch(reciprocalContact._id, { status: "connected" });
+      }
+    } else {
+      await ctx.db.insert("contacts", {
+        ownerId: targetUser._id,
+        contactUserId: args.ownerId,
+        status: "connected",
+        createdAt: Date.now(),
+      });
     }
 
     return await ctx.db.get(newContactId);

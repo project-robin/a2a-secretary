@@ -61,7 +61,21 @@ export async function POST(
 
       console.log(`[A2A] Incoming message for ${user.name} (${user._id}): "${text}"`);
 
+      // Store the incoming message from the remote agent
+      await convex.mutation(api.messages.send, {
+        userId: user._id,
+        role: "remote_agent",
+        text: `[Remote Agent]: ${text}`,
+      });
+
       const result = await executeAgent(user._id, text);
+
+      // Store our agent's reply
+      await convex.mutation(api.messages.send, {
+        userId: user._id,
+        role: "assistant",
+        text: result,
+      });
 
       return NextResponse.json({
         jsonrpc: "2.0",
