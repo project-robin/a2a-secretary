@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "mcp2cli": {
+      "source": "knowsuchagency/mcp2cli",
+      "sourceType": "github",
+      "computedHash": "6b599f52dd8eae192bb4ff79b180c86dfa1229de34cc3ace67855efc0ce53731"
+    }
+  }
+}

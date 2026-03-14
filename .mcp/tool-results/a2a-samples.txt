@@ -1,0 +1,11 @@
+I cannot answer your question about asynchronous processing and idempotency in Next.js or Vercel AI SDK samples, nor can I recommend specific packages or helpers for them. The provided codebase context does not contain any files related to Next.js or Vercel AI SDK. The samples primarily focus on Python and Java agents, with some JavaScript examples, but none of these are within the Next.js or Vercel AI SDK frameworks.
+
+## Notes
+The codebase contains JavaScript samples, but these are not related to Next.js or Vercel AI SDK. For example, `samples/js/src/agents/coder/index.ts`  and `samples/js/src/agents/movie-agent/index.ts`  demonstrate agent execution and event publishing within a custom SDK, not Next.js or Vercel AI SDK.
+
+Wiki pages you might want to explore:
+- [MCP Integration (a2aproject/a2a-samples)](/wiki/a2aproject/a2a-samples#8.4)
+- [Evaluation & Testing (a2aproject/a2a-samples)](/wiki/a2aproject/a2a-samples#8.7)
+
+View this search on DeepWiki: https://deepwiki.com/search/how-is-asynchronous-processing_ed19e186-447b-48c4-9423-4dcd26742134
+
