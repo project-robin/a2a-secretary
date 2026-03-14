@@ -34,6 +34,10 @@ export default function Home() {
   const [messages, setMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionFilter, setMentionFilter] = useState("");
+  const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
 
   const handleUserChange = useCallback((user: User) => {
     setCurrentUser((prev) => prev?._id === user._id ? prev : user);
@@ -50,6 +54,11 @@ export default function Home() {
     currentUser ? { userId: currentUser._id } : "skip"
   );
 
+  const contacts = useQuery(
+    api.contacts.getContacts,
+    currentUser ? { ownerId: currentUser._id } : "skip"
+  );
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -61,14 +70,34 @@ export default function Home() {
 
     const userMessage = input;
     setInput("");
+    setShowMentions(false);
     setMessages((prev) => [...prev, { role: "user", text: userMessage }]);
     setLoading(true);
 
     try {
+      // Extract mentioned contacts from the message
+      const mentionedContacts = [];
+      if (contacts) {
+        for (const contact of contacts) {
+          const name = contact.user?.name;
+          if (name && userMessage.includes(`@${name}`)) {
+            mentionedContacts.push({
+              name,
+              handle: contact.user?.handle || "External Agent",
+              agentUrl: contact.user?.agentUrl
+            });
+          }
+        }
+      }
+
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser._id, message: userMessage }),
+        body: JSON.stringify({
+          userId: currentUser._id,
+          message: userMessage,
+          mentionedContacts
+        }),
       });
       const data = await response.json();
       setMessages((prev) => [...prev, { role: "assistant", text: data.text }]);
@@ -77,6 +106,72 @@ export default function Home() {
       setMessages((prev) => [...prev, { role: "assistant", text: "Communication failure. Check your API quota or network." }]);
     } finally {
       setLoading(false);
+    }
+  };
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInput(value);
+
+    // Simple mention detection logic
+    const cursorPosition = e.target.selectionStart || 0;
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const words = textBeforeCursor.split(" ");
+    const currentWord = words[words.length - 1];
+
+    if (currentWord.startsWith("@")) {
+      setShowMentions(true);
+      setMentionFilter(currentWord.slice(1));
+      setSelectedMentionIndex(0);
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  const filteredContacts = (contacts || []).filter(c =>
+    c.user?.name && c.user.name.toLowerCase().startsWith(mentionFilter.toLowerCase())
+  );
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showMentions && filteredContacts.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedMentionIndex((prev) =>
+          prev < filteredContacts.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedMentionIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredContacts.length - 1
+        );
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        const contact = filteredContacts[selectedMentionIndex];
+        if (contact && contact.user?.name) {
+          const cursorPosition = inputRef.current?.selectionStart || 0;
+          const textBeforeCursor = input.slice(0, cursorPosition);
+          const textAfterCursor = input.slice(cursorPosition);
+          const words = textBeforeCursor.split(" ");
+          words.pop(); // Remove the typed @mention part
+          const newTextBeforeCursor = words.join(" ") + (words.length > 0 ? " " : "") + `@${contact.user.name} `;
+
+          setInput(newTextBeforeCursor + textAfterCursor);
+          setShowMentions(false);
+
+          // Focus back to input
+          setTimeout(() => {
+            if (inputRef.current) {
+              inputRef.current.focus();
+              const newPos = newTextBeforeCursor.length;
+              inputRef.current.setSelectionRange(newPos, newPos);
+            }
+          }, 0);
+        }
+      } else if (e.key === "Escape") {
+        setShowMentions(false);
+      }
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -161,7 +256,7 @@ export default function Home() {
 
           {currentUser && (
             <div className="max-w-md mb-8">
-              <ContactsPanel userId={currentUser._id} />
+              <ContactsPanel userId={currentUser._id} initialContacts={contacts || undefined} />
             </div>
           )}
 
@@ -225,12 +320,49 @@ export default function Home() {
 
               <div className="p-6 bg-white/80 border-t border-stone-100">
                 <div className="relative group">
+                  {showMentions && filteredContacts.length > 0 && (
+                    <div className="absolute bottom-full left-0 w-64 mb-2 bg-white rounded-xl shadow-xl border border-stone-200 overflow-hidden z-10 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                      {filteredContacts.map((contact, idx) => (
+                        <div
+                          key={contact._id}
+                          className={`px-4 py-3 cursor-pointer flex items-center justify-between transition-colors ${
+                            idx === selectedMentionIndex ? 'bg-stone-100' : 'hover:bg-stone-50'
+                          }`}
+                          onClick={() => {
+                            if (contact.user?.name) {
+                              const cursorPosition = inputRef.current?.selectionStart || 0;
+                              const textBeforeCursor = input.slice(0, cursorPosition);
+                              const textAfterCursor = input.slice(cursorPosition);
+                              const words = textBeforeCursor.split(" ");
+                              words.pop();
+                              const newTextBeforeCursor = words.join(" ") + (words.length > 0 ? " " : "") + `@${contact.user.name} `;
+
+                              setInput(newTextBeforeCursor + textAfterCursor);
+                              setShowMentions(false);
+
+                              setTimeout(() => {
+                                if (inputRef.current) {
+                                  inputRef.current.focus();
+                                  const newPos = newTextBeforeCursor.length;
+                                  inputRef.current.setSelectionRange(newPos, newPos);
+                                }
+                              }, 0);
+                            }
+                          }}
+                        >
+                          <div className="font-medium text-sm text-stone-800">{contact.user?.name}</div>
+                          <div className="text-xs text-stone-400 font-mono">{contact.user?.handle || 'External'}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <input
+                    ref={inputRef}
                     type="text"
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                    placeholder="Brief your secretary..."
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Brief your secretary... (Type @ to mention contacts)"
                     className="w-full bg-stone-100 border-none rounded-2xl px-6 py-4 pr-14 text-sm font-medium focus:ring-2 focus:ring-stone-900/5 transition-all outline-none"
                     disabled={loading}
                   />

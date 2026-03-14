@@ -138,7 +138,7 @@ export const getAgentCard = tool({
   }),
   execute: async ({ agentUrl }) => {
     console.log(`[Tool] get_agent_card called for ${agentUrl}`);
-    let trimmedUrl = agentUrl.replace(/\/+$/, "");
+    const trimmedUrl = agentUrl.replace(/\/+$/, "");
     let cardUrl = `${trimmedUrl}/.well-known/agent-card.json`;
 
     if (trimmedUrl.endsWith("/.well-known/agent-card.json") || trimmedUrl.endsWith("/.well-known/agent.json")) {
