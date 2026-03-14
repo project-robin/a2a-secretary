@@ -4,8 +4,6 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../convex/_generated/api";
 import { WebhookEvent } from "@clerk/nextjs/server";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
@@ -59,6 +57,10 @@ export async function POST(req: Request) {
       || "Agent";
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
+
+    // Instantiate convex client inside the endpoint so it doesn't run during build when NEXT_PUBLIC_CONVEX_URL isn't present
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://fake-url.convex.cloud";
+    const convex = new ConvexHttpClient(convexUrl);
 
     await convex.mutation(api.calendar.createUserForClerk, {
       clerkId: id,

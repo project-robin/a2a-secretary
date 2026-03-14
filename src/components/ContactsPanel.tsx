@@ -5,12 +5,31 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
-export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
+type ContactData = {
+  _id: Id<"contacts">;
+  _creationTime: number;
+  ownerId: Id<"users">;
+  contactUserId: Id<"users">;
+  status: string;
+  createdAt: number;
+  isIncoming: boolean;
+  user: {
+    _id: Id<"users">;
+    _creationTime: number;
+    name: string;
+    agentUrl: string;
+    clerkId?: string;
+    handle?: string;
+  } | null;
+};
+
+export default function ContactsPanel({ userId, initialContacts }: { userId: Id<"users">, initialContacts?: ContactData[] }) {
   const [handleCode, setHandleCode] = useState("");
   const [error, setError] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
-  const contacts = useQuery(api.contacts.getContacts, { ownerId: userId });
+  const queryContacts = useQuery(api.contacts.getContacts, { ownerId: userId });
+  const contacts = queryContacts || initialContacts;
   const addContact = useMutation(api.contacts.addContact);
   const addExternalContact = useAction(api.contacts.addExternalContact);
   const removeContact = useMutation(api.contacts.removeContact);
@@ -82,7 +101,7 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
       <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
         {contacts.length === 0 ? (
           <div className="p-6 text-center text-sm text-gray-500">
-            No contacts yet. Add someone's 6-character code or A2A URL above to connect!
+            No contacts yet. Add someone&apos;s 6-character code or A2A URL above to connect!
           </div>
         ) : (
           contacts.map((contact) => (

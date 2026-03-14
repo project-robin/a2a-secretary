@@ -4,8 +4,6 @@ import { auth } from "@clerk/nextjs/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
 export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
@@ -14,16 +12,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { message } = await request.json();
+  const { message, mentionedContacts } = await request.json();
   if (!message) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
   }
+
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://fake-url.convex.cloud";
+  const convex = new ConvexHttpClient(convexUrl);
 
   const user = await convex.query(api.calendar.getByClerkId, { clerkId });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const text = await executeAgent(user._id, message);
+  const text = await executeAgent(user._id, message, mentionedContacts);
   return NextResponse.json({ text });
 }

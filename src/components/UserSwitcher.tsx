@@ -18,6 +18,7 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
   const { user: clerkUser, isLoaded } = useUser();
   const { signOut } = useClerk();
   const [copied, setCopied] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
   const createUser = useMutation(api.calendar.createUserForClerk);
 
   // Load the current user from Convex via their clerkId
@@ -84,6 +85,12 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(convexUser.agentUrl);
+    setUrlCopied(true);
+    setTimeout(() => setUrlCopied(false), 2000);
+  };
+
   return (
     <div className="mb-12 animate-in slide-in-from-top-4 duration-700">
       <div className="flex items-center gap-3 mb-6 px-2">
@@ -107,28 +114,50 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          <div className="bg-stone-50 border border-stone-200 px-6 py-3 rounded-2xl flex flex-col items-center">
-            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">
-              Your Agent Code
-            </span>
-            <div className="flex items-center gap-3">
-              <span className="font-display font-black text-2xl tracking-[0.2em] text-stone-800">
-                {convexUser.handle}
-              </span>
-              <button
-                onClick={handleCopyCode}
-                className="p-2 hover:bg-stone-200 rounded-lg transition-colors text-stone-500"
-                title="Copy code"
-              >
-                {copied ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
-              </button>
+        <div className="flex flex-col lg:flex-row items-center gap-4 w-full lg:w-auto overflow-hidden">
+          <div className="flex flex-col gap-2 w-full lg:w-auto">
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full">
+              <div className="bg-stone-50 border border-stone-200 px-6 py-3 rounded-2xl flex flex-col items-center min-w-[200px] w-full md:w-auto shrink-0">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">
+                  Your Agent Code
+                </span>
+                <div className="flex items-center gap-3">
+                  <span className="font-display font-black text-2xl tracking-[0.2em] text-stone-800">
+                    {convexUser.handle}
+                  </span>
+                  <button
+                    onClick={handleCopyCode}
+                    className="p-2 hover:bg-stone-200 rounded-lg transition-colors text-stone-500"
+                    title="Copy code"
+                  >
+                    {copied ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-stone-50 border border-stone-200 px-6 py-3 rounded-2xl flex flex-col items-center flex-1 w-full md:max-w-[300px] overflow-hidden">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">
+                  A2A Discovery URL
+                </span>
+                <div className="flex items-center gap-2 w-full">
+                  <span className="font-mono text-xs text-stone-600 truncate flex-1" title={convexUser.agentUrl}>
+                    {convexUser.agentUrl}
+                  </span>
+                  <button
+                    onClick={handleCopyUrl}
+                    className="p-1.5 hover:bg-stone-200 rounded-lg transition-colors text-stone-500 flex-shrink-0"
+                    title="Copy URL"
+                  >
+                    {urlCopied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
           <button
             onClick={() => signOut()}
-            className="flex items-center gap-2 px-5 py-3 text-sm font-bold text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-3 text-sm font-bold text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-xl transition-all h-full"
           >
             <LogOut className="w-4 h-4" />
             Sign Out

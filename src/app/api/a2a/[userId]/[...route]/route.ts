@@ -3,8 +3,6 @@ import { executeAgent } from "@/lib/a2a/executor";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../../../../../convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
-
 export const maxDuration = 60;
 
 export async function GET(
@@ -15,6 +13,9 @@ export async function GET(
 
   const path = route.join("/");
   if (path === ".well-known/agent-card.json" || path === ".well-known/agent.json") {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://fake-url.convex.cloud";
+    const convex = new ConvexHttpClient(convexUrl);
+
     const user = await convex.query(api.calendar.getById, { userId });
     if (!user) return new NextResponse("Not Found", { status: 404 });
 
@@ -40,6 +41,9 @@ export async function POST(
   const { userId, route } = await params;
 
   if (route.join("/") === "jsonrpc") {
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://fake-url.convex.cloud";
+    const convex = new ConvexHttpClient(convexUrl);
+
     // userId in the URL IS the Convex ID — no name resolution needed
     const user = await convex.query(api.calendar.getById, { userId });
     if (!user) {
