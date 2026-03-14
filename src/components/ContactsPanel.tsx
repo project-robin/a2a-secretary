@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
@@ -12,21 +12,30 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
 
   const contacts = useQuery(api.contacts.getContacts, { ownerId: userId });
   const addContact = useMutation(api.contacts.addContact);
+  const addExternalContact = useAction(api.contacts.addExternalContact);
   const removeContact = useMutation(api.contacts.removeContact);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    const code = handleCode.trim().toUpperCase();
-    if (!/^[A-Z0-9]{6}$/.test(code)) {
-      setError("Handle must be exactly 6 alphanumeric characters.");
-      return;
-    }
+    const input = handleCode.trim();
+    if (!input) return;
 
     setIsAdding(true);
     try {
-      await addContact({ ownerId: userId, handle: code });
+      // Check if it's a URL or a 6-digit code
+      if (input.startsWith("http://") || input.startsWith("https://")) {
+        await addExternalContact({ ownerId: userId, agentUrl: input });
+      } else {
+        const code = input.toUpperCase();
+        if (!/^[A-Z0-9]{6}$/.test(code)) {
+          setError("Handle must be exactly 6 alphanumeric characters or a valid URL.");
+          setIsAdding(false);
+          return;
+        }
+        await addContact({ ownerId: userId, handle: code });
+      }
       setHandleCode("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add contact.");
@@ -45,14 +54,13 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
         <h2 className="text-lg font-semibold text-gray-900">Contacts</h2>
 
         <form onSubmit={handleAdd} className="flex gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-48">
+          <div className="relative flex-1 sm:w-64">
             <input
               type="text"
-              placeholder="Enter 6-char code"
+              placeholder="Enter 6-char code or A2A URL"
               value={handleCode}
-              onChange={(e) => setHandleCode(e.target.value.toUpperCase())}
-              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase"
-              maxLength={6}
+              onChange={(e) => setHandleCode(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <button
@@ -74,14 +82,16 @@ export default function ContactsPanel({ userId }: { userId: Id<"users"> }) {
       <div className="divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
         {contacts.length === 0 ? (
           <div className="p-6 text-center text-sm text-gray-500">
-            No contacts yet. Add someone&apos;s 6-character code above to connect!
+            No contacts yet. Add someone's 6-character code or A2A URL above to connect!
           </div>
         ) : (
           contacts.map((contact) => (
             <div key={contact._id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
               <div>
                 <div className="font-medium text-gray-900">{contact.user!.name}</div>
-                <div className="text-xs text-gray-500 font-mono mt-0.5">{contact.user!.handle}</div>
+                <div className="text-xs text-gray-500 font-mono mt-0.5">
+                  {contact.user!.handle || 'External Agent'}
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 {contact.isIncoming ? (

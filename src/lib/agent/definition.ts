@@ -1,6 +1,6 @@
 import { ToolLoopAgent } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
-import { checkCalendar, addMeeting, contactRemoteAgent, resolveContactUrl } from "./tools";
+import { checkCalendar, addMeeting, contactRemoteAgent, resolveContactUrl, getContacts, getAgentCard } from "./tools";
 
 // Define call options type for dynamic context injection
 interface SecretaryCallOptions {
@@ -28,6 +28,8 @@ DO NOT GREET. DO NOT TALK. ONLY CALL TOOLS.`,
     add_meeting: addMeeting,
     contact_remote_agent: contactRemoteAgent,
     resolve_contact_url: resolveContactUrl,
+    get_contacts: getContacts,
+    get_agent_card: getAgentCard,
   },
   // Inject userId from options into experimental_context for tool access
   prepareCall: ({ options, ...rest }) => ({

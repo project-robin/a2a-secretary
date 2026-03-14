@@ -109,3 +109,50 @@ export const resolveContactUrl = tool({
     };
   },
 });
+
+export const getContacts = tool({
+  description: "Get a list of all contacts connected to the current user. Use this to find out who you can talk to.",
+  inputSchema: z.object({}),
+  execute: async (_input, { experimental_context }) => {
+    console.log("[Tool] get_contacts called");
+    const context = experimental_context as { userId?: string } | undefined;
+    const userId = context?.userId;
+    if (!userId) throw new Error("userId not found in execution context");
+
+    const contacts = await convex.query(api.contacts.getContacts, { ownerId: userId as any });
+
+    return contacts.map((c: any) => ({
+      name: c.user?.name,
+      handle: c.user?.handle || "External Agent",
+      agentUrl: c.user?.agentUrl,
+      status: c.status,
+      isIncoming: c.isIncoming
+    }));
+  },
+});
+
+export const getAgentCard = tool({
+  description: "Get the agent card metadata for a remote A2A agent URL. Use this to discover the remote agent's capabilities, descriptions, and endpoints.",
+  inputSchema: z.object({
+    agentUrl: z.string().describe("The base URL or agent card URL of the remote agent."),
+  }),
+  execute: async ({ agentUrl }) => {
+    console.log(`[Tool] get_agent_card called for ${agentUrl}`);
+    let trimmedUrl = agentUrl.replace(/\/+$/, "");
+    let cardUrl = `${trimmedUrl}/.well-known/agent-card.json`;
+
+    if (trimmedUrl.endsWith("/.well-known/agent-card.json") || trimmedUrl.endsWith("/.well-known/agent.json")) {
+      cardUrl = trimmedUrl;
+    }
+
+    try {
+      const response = await fetch(cardUrl);
+      if (!response.ok) {
+        return { error: `Failed to fetch agent card: ${response.status} ${response.statusText}` };
+      }
+      return await response.json();
+    } catch (err) {
+      return { error: `Error fetching agent card: ${err instanceof Error ? err.message : String(err)}` };
+    }
+  },
+});

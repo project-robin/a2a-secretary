@@ -10,7 +10,8 @@ export default defineSchema({
   })
     .index("by_name", ["name"])
     .index("by_clerkId", ["clerkId"])
-    .index("by_handle", ["handle"]),
+    .index("by_handle", ["handle"])
+    .index("by_agentUrl", ["agentUrl"]),
   calendarEvents: defineTable({
     userId: v.id("users"),
     title: v.string(),
