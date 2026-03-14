@@ -56,3 +56,4 @@ next-env.d.ts
 scripts/
 deepwiki-cli.py
 CLAUDE.md
+.worktrees/
