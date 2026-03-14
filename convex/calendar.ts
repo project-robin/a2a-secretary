@@ -31,6 +31,24 @@ export const addEvent = mutation({
     endTime: v.number(),
   },
   handler: async (ctx: any, args: any) => {
+    // Idempotency: check if the exact same event already exists
+    const existingEvents = await ctx.db
+      .query("calendarEvents")
+      .withIndex("by_user", (q: any) => q.eq("userId", args.userId))
+      .filter((q: any) =>
+        q.and(
+          q.eq(q.field("title"), args.title),
+          q.eq(q.field("startTime"), args.startTime),
+          q.eq(q.field("endTime"), args.endTime)
+        )
+      )
+      .collect();
+
+    if (existingEvents.length > 0) {
+      console.log(`[Calendar] Event "${args.title}" already exists, skipping insertion to prevent duplicates.`);
+      return;
+    }
+
     await ctx.db.insert("calendarEvents", {
       userId: args.userId,
       title: args.title,

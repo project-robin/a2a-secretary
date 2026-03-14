@@ -5,8 +5,10 @@ import { A2AClient } from "@a2a-js/sdk/client";
 import { tool } from "ai";
 import { z } from "zod";
 
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://placeholder-url.convex.cloud";
-const convex = new ConvexHttpClient(convexUrl);
+function getConvexClient() {
+  const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || "https://placeholder-url.convex.cloud";
+  return new ConvexHttpClient(convexUrl);
+}
 
 export const checkCalendar = tool({
   description: "Check the current user's calendar for existing events. No parameters needed.",
@@ -16,6 +18,8 @@ export const checkCalendar = tool({
     const context = experimental_context as { userId?: string } | undefined;
     const userId = context?.userId;
     if (!userId) throw new Error("userId not found in execution context");
+
+    const convex = getConvexClient();
     const events = await convex.query(api.calendar.getEvents, { userId } as any);
     console.log(`[Tool] check_calendar found ${events.length} events`);
     return events;
@@ -40,6 +44,7 @@ export const addMeeting = tool({
 
     try {
         console.log(`[Tool] Executing Convex mutation for user ${userId}...`);
+        const convex = getConvexClient();
         await convex.mutation(api.calendar.addEvent, { userId, title, startTime, endTime } as any);
         console.log("[Tool] Convex mutation SUCCESS");
         return "Meeting added successfully.";
@@ -92,6 +97,7 @@ export const resolveContactUrl = tool({
     const userId = context?.userId;
     if (!userId) throw new Error("userId not found in execution context");
 
+    const convex = getConvexClient();
     const targetUser = await convex.query(api.calendar.getByHandle, { handle });
     if (!targetUser) return { error: `No user found with code ${handle}` };
 
@@ -119,6 +125,7 @@ export const getContacts = tool({
     const userId = context?.userId;
     if (!userId) throw new Error("userId not found in execution context");
 
+    const convex = getConvexClient();
     const contacts = await convex.query(api.contacts.getContacts, { ownerId: userId as any });
 
     return contacts.map((c: any) => ({
