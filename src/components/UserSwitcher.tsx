@@ -29,10 +29,12 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
   // Sync user if authenticated but not in Convex
   useEffect(() => {
     if (isLoaded && clerkUser && convexUser === null) {
+      // Use the NEXT_PUBLIC_BASE_URL if available, otherwise fallback to window.location.origin
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
       createUser({
         clerkId: clerkUser.id,
         name: clerkUser.fullName || clerkUser.firstName || "Anonymous",
-        baseUrl: window.location.origin,
+        baseUrl: baseUrl,
       });
     }
   }, [isLoaded, clerkUser, convexUser, createUser]);
