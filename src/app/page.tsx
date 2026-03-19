@@ -287,9 +287,9 @@ export default function Home() {
             />
           )}
 
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex-1 flex overflow-hidden relative">
             {/* Left Sidebar: Contacts & Activity */}
-            <div className="flex flex-col border-r border-stone-200">
+            <div className="hidden lg:flex flex-col border-r border-stone-200">
               <ContactsSidebar userId={currentUser?._id || ""} />
               <ActivityFeed
                 userId={currentUser?._id || ""}
@@ -320,7 +320,9 @@ export default function Home() {
             />
 
             {/* Right Panel: Context & Memory */}
-            <ContextPanel userId={currentUser?._id || ""} />
+            <div className="hidden xl:flex">
+              <ContextPanel userId={currentUser?._id || ""} />
+            </div>
           </div>
         </div>
       </Authenticated>
@@ -329,45 +331,45 @@ export default function Home() {
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-stone-200/50 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-amber-100/30 blur-[100px] rounded-full" />
 
-        <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 lg:py-20">
-          <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-8 animate-in fade-in slide-in-from-top-8 duration-1000">
+        <main className="relative z-10 max-w-7xl mx-auto px-6 py-8 md:py-12 lg:py-20">
+          <header className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-8 animate-in fade-in slide-in-from-top-8 duration-1000">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-2 bg-stone-900 rounded-xl shadow-lg shadow-stone-900/20">
-                  <ShieldCheck className="w-6 h-6 text-white" />
+                  <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
-                <span className="font-display font-bold text-[10px] uppercase tracking-[0.4em] text-stone-400">
+                <span className="font-display font-bold text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-stone-400">
                   Zero-Trust A2A Agent
                 </span>
               </div>
-              <h1 className="font-display text-5xl md:text-7xl font-black text-stone-900 tracking-tighter leading-none mb-2">
+              <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-black text-stone-900 tracking-tighter leading-none mb-2">
                 Secretary<span className="text-stone-300">.</span>
               </h1>
-              <p className="text-stone-500 font-medium tracking-tight text-lg">
+              <p className="text-stone-500 font-medium tracking-tight text-base md:text-lg">
                 Autonomous scheduling for the hyper-efficient.
               </p>
             </div>
           </header>
 
           {clerkLoaded && clerkSignedIn ? (
-            <div className="glass rounded-[2.5rem] p-12 flex flex-col items-center text-center shadow-2xl shadow-stone-200/50 border border-white max-w-2xl mx-auto animate-in fade-in duration-500">
+            <div className="glass rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center text-center shadow-2xl shadow-stone-200/50 border border-white max-w-2xl mx-auto animate-in fade-in duration-500">
               <Loader2 className="w-10 h-10 text-stone-400 animate-spin mb-4" />
-              <h2 className="font-display text-2xl font-bold text-stone-900 mb-2">Syncing with Convex</h2>
-              <p className="text-stone-500 text-sm">
+              <h2 className="font-display text-xl md:text-2xl font-bold text-stone-900 mb-2">Syncing with Convex</h2>
+              <p className="text-stone-500 text-xs md:text-sm">
                 Establishing your secure workspace in Convex...
               </p>
             </div>
           ) : (
-            <div className="glass rounded-[2.5rem] p-12 flex flex-col items-center text-center shadow-2xl shadow-stone-200/50 border border-white max-w-2xl mx-auto animate-in zoom-in-95 duration-500">
-              <div className="w-20 h-20 bg-stone-900 rounded-full flex items-center justify-center mb-8 shadow-xl shadow-stone-900/20">
-                <ShieldCheck className="w-10 h-10 text-white" />
+            <div className="glass rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-12 flex flex-col items-center text-center shadow-2xl shadow-stone-200/50 border border-white max-w-2xl mx-auto animate-in zoom-in-95 duration-500">
+              <div className="w-16 h-16 md:w-20 md:h-20 bg-stone-900 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-xl shadow-stone-900/20">
+                <ShieldCheck className="w-8 h-8 md:w-10 md:h-10 text-white" />
               </div>
-              <h2 className="font-display text-4xl font-bold text-stone-900 mb-4">Initialize Identity</h2>
-              <p className="text-stone-500 text-lg mb-10 max-w-lg leading-relaxed">
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-stone-900 mb-4">Initialize Identity</h2>
+              <p className="text-stone-500 text-base md:text-lg mb-8 md:mb-10 max-w-lg leading-relaxed">
                 Create your Zero-Trust Agent identity to participate in autonomous scheduling negotiations on the A2A network.
               </p>
               <SignInButton mode="modal">
-                <button className="group relative bg-stone-900 text-white px-10 py-5 rounded-full font-display font-bold tracking-wider uppercase transition-all hover:bg-stone-800 hover:scale-105 active:scale-95 shadow-xl shadow-stone-900/20 flex items-center gap-3">
+                <button className="group relative bg-stone-900 text-white px-8 md:px-10 py-4 md:py-5 rounded-full font-display font-bold tracking-wider uppercase transition-all hover:bg-stone-800 hover:scale-105 active:scale-95 shadow-xl shadow-stone-900/20 flex items-center gap-3">
                   Authenticate
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </button>
