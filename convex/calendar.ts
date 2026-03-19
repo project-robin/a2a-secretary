@@ -65,16 +65,6 @@ export const getUsers = query({
   },
 });
 
-export const getUserByName = query({
-  args: { name: v.string() },
-  handler: async (ctx: any, args: any) => {
-    return await ctx.db
-      .query("users")
-      .withIndex("by_name", (q: any) => q.eq("name", args.name))
-      .unique();
-  },
-});
-
 export const getById = query({
   args: { userId: v.id("users") },
   handler: async (ctx: any, args: any) => {
@@ -128,10 +118,11 @@ export const createUserForClerk = mutation({
     }
 
     const userId = await ctx.db.insert("users", {
-      name,
+      agentName: name, // default agent name = user's display name
+      agentUrl: "", // placeholder until we have the ID
       clerkId,
       handle,
-      agentUrl: "", // placeholder until we have the ID
+      createdAt: Date.now(),
     });
 
     // Update agentUrl with the actual Convex ID
@@ -147,7 +138,7 @@ export const fixSeededUsers = mutation({
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
     const users = await ctx.db.query("users").collect();
     for (const user of users) {
-      if (user.name === "Alice" || user.name === "Bob") {
+      if (user.agentName === "Alice" || user.agentName === "Bob") {
         await ctx.db.patch(user._id, {
           agentUrl: `${baseUrl}/api/a2a/${user._id}`,
         });
@@ -163,16 +154,18 @@ export const seedUsers = mutation({
     if (existingUsers.length === 0) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
       const aliceId = await ctx.db.insert("users", {
-        name: "Alice",
+        agentName: "Alice",
         handle: "ALICE1",
         agentUrl: "placeholder",
+        createdAt: Date.now(),
       });
       await ctx.db.patch(aliceId, { agentUrl: `${baseUrl}/api/a2a/${aliceId}` });
 
       const bobId = await ctx.db.insert("users", {
-        name: "Bob",
+        agentName: "Bob",
         handle: "BOB001",
         agentUrl: "placeholder",
+        createdAt: Date.now(),
       });
       await ctx.db.patch(bobId, { agentUrl: `${baseUrl}/api/a2a/${bobId}` });
 
