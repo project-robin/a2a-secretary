@@ -1,0 +1,36 @@
+The AI SDK is a comprehensive TypeScript toolkit designed for building AI-powered applications and agents, offering a unified API for interacting with various language models and providers . It is structured into three main parts: AI SDK Core, AI SDK UI, and AI SDK RSC, each catering to different aspects of AI application development . The SDK supports key features such as tool calling, agent patterns, streaming, generative UI, and structured output    .
+
+## Major Features and Capabilities
+
+### Tool Calling
+The AI SDK enables models to interact with external systems and perform discrete tasks through tool calling . Tools are defined with a description, an `inputSchema` (using Zod or JSON schema), and an optional `execute` function  . Tools can be client-executed, where the `execute` function runs in the application environment, or provider-executed, where the AI service handles the execution  . The SDK also supports tool execution approval workflows .
+
+### Agent Patterns
+The SDK supports agent implementations, allowing models to execute multiple steps and tool calls in a non-deterministic way to accomplish tasks  . The `ToolLoopAgent` is a key pattern for building agents . Agents can reason at each step and make decisions based on evolving context .
+
+### Streaming
+The AI SDK is streaming-first, implementing a multi-stage streaming pipeline using the Web Streams API  . This enables real-time updates for chat, completion, and generative UI applications . Functions like `streamText` are used for interactive use cases such as chatbots and content streaming .
+
+### Generative UI
+The SDK provides capabilities for building generative user interfaces. AI SDK UI offers framework-agnostic hooks like `useChat`, `useCompletion`, and `useObject` for building interactive chat, completion, and assistant interfaces  . Additionally, AI SDK RSC (React Server Components) allows streaming React components directly from the server to the client, enabling dynamic UI generation .
+
+### Structured Output
+The AI SDK supports generating structured data through `generateText` and `streamText` functions using the `Output` object  . This allows constraining model outputs to a specific schema, useful for information extraction, classification, and synthetic data generation  . It supports both Zod and raw JSON schemas for validation .
+
+### Other Key Features
+
+*   **Provider Interoperability**: The SDK uses a Provider-V3 specification (`LanguageModelV3` interface) to standardize interactions with various AI model providers like OpenAI, Anthropic, and Google, preventing vendor lock-in  .
+*   **Multi-Runtime Support**: It targets both Node.js and Edge runtimes, using Web Streams API and `fetch` for HTTP requests to ensure compatibility across environments  .
+*   **Embeddings**: The SDK provides `embed()` for single value embeddings and `embedMany()` for batch embeddings, offering insights into token usage  .
+*   **Image and Video Generation**: It includes functions like `generateImage()` and `experimental_generateVideo()` for creating images and videos based on prompts .
+*   **Transcription**: The `experimental_transcribe()` function allows generating transcripts from audio files .
+*   **OpenTelemetry Support**: Experimental OpenTelemetry support is included for all AI SDK Core functions, enhancing observability and tracing capabilities .
+
+## Notes
+The AI SDK is a monorepo with various packages for core AI functionality, UI hooks, and provider integrations . While AI SDK RSC is available for streaming React components, it is currently experimental, and AI SDK UI is recommended for production applications due to current limitations in RSC  .
+
+Wiki pages you might want to explore:
+- [Architecture and Design Principles (vercel/ai)](/wiki/vercel/ai#1.1)
+
+View this search on DeepWiki: https://deepwiki.com/search/what-are-all-the-major-feature_33221f85-5e84-4bfa-bd8c-9119cab80197
+

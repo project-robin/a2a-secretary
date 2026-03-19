@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     agentTone: ((user as any).agentTone || "casual") as "casual" | "formal" | "friendly",
   };
 
-  const text = await executeAgent(
+  const { text, richContent } = await executeAgent(
     user._id,
     message,
     mentionedContacts,
@@ -39,12 +39,12 @@ export async function POST(request: NextRequest) {
     persona
   );
 
-  // Save the assistant's reply to the database
   await convex.mutation(api.messages.send, {
     userId: user._id,
     role: "assistant",
     text,
+    richContent,
   });
 
-  return NextResponse.json({ text });
+  return NextResponse.json({ text, richContent });
 }

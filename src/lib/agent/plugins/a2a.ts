@@ -12,10 +12,10 @@ function getConvexClient() {
 }
 
 const contactAgent = tool({
-  description: "Send a message to another agent via A2A protocol.",
+  description: "Send a message to another agent via A2A protocol. You can optionally include structured data (e.g. for Generative UI) which will be sent as an A2A DataPart.",
   inputSchema: z.object({
     remoteAgentUrl: z.string().describe("The full A2A URL of the remote agent."),
-    message: z.string().describe("The message to send."),
+    message: z.string().describe("The text message to send."),
   }),
   execute: async ({ remoteAgentUrl, message }, { experimental_context }) => {
     const trimmedUrl = remoteAgentUrl.replace(/\/+$/, "");
@@ -29,13 +29,29 @@ const contactAgent = tool({
 
     const context = experimental_context as { userId?: string } | undefined;
     const userId = context?.userId;
+    let senderInfo = null;
+
     if (userId) {
       const convex = getConvexClient();
+      const user = await convex.query(api.calendar.getById, { userId });
+      if (user) {
+        senderInfo = {
+          name: (user as any).agentName || (user as any).name,
+          handle: (user as any).handle,
+          agentUrl: (user as any).agentUrl,
+        };
+      }
+
       await convex.mutation(api.messages.send, {
         userId: userId as any,
         role: "assistant",
         text: `[Sending to remote agent]: ${message}`,
       });
+    }
+
+    const parts: any[] = [{ kind: "text", text: message }];
+    if (senderInfo) {
+      parts.push({ kind: "data", data: { kind: "sender_metadata", ...senderInfo } });
     }
 
     const client = new A2AClient(baseUrl);
@@ -44,7 +60,7 @@ const contactAgent = tool({
         kind: "message",
         role: "user",
         messageId: crypto.randomUUID(),
-        parts: [{ kind: "text", text: message } as any],
+        parts,
       },
     });
     return JSON.stringify(response);
@@ -120,7 +136,7 @@ const getAgentCard = tool({
 });
 
 const broadcastToGroup = tool({
-  description: "Send the same message to multiple agents simultaneously. Use for group coordination (e.g. picnic planning).",
+  description: "Send the same message and optional structured data to multiple agents simultaneously. Use for group coordination (e.g. picnic planning).",
   inputSchema: z.object({
     handles: z.array(z.string()).describe("Array of 6-character handles to contact."),
     message: z.string().describe("The message to send to all agents."),
@@ -131,7 +147,22 @@ const broadcastToGroup = tool({
     if (!userId) throw new Error("userId not found in execution context");
 
     const convex = getConvexClient();
+    const user = await convex.query(api.calendar.getById, { userId });
+    let senderInfo = null;
+    if (user) {
+      senderInfo = {
+        name: (user as any).agentName || (user as any).name,
+        handle: (user as any).handle,
+        agentUrl: (user as any).agentUrl,
+      };
+    }
+
     const results: Array<{ handle: string; status: string; response?: any; error?: string }> = [];
+
+    const parts: any[] = [{ kind: "text", text: message }];
+    if (senderInfo) {
+      parts.push({ kind: "data", data: { kind: "sender_metadata", ...senderInfo } });
+    }
 
     for (const handle of handles) {
       try {
@@ -155,7 +186,7 @@ const broadcastToGroup = tool({
             kind: "message",
             role: "user",
             messageId: crypto.randomUUID(),
-            parts: [{ kind: "text", text: message } as any],
+            parts,
           },
         });
         results.push({ handle, status: "success", response });

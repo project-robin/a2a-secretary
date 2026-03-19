@@ -1,0 +1,25 @@
+This repository, `vercel-labs/json-render`, is a Generative UI framework that allows AI to generate user interfaces from natural language prompts. It ensures reliability by constraining the AI to predefined components and actions you define in a `catalog`  . The framework can be used across various platforms like React, React Native, Remotion, React PDF, and others, by defining a `catalog` and then mapping those definitions to platform-specific implementations using a `registry`  .
+
+## Repository Purpose and Usage
+
+The core idea behind `json-render` is to enable AI to generate dynamic and personalized UIs while maintaining control and predictability  . This is achieved through a three-step process:
+
+1.  **Define your catalog**: You define a `catalog` using `defineCatalog` from `@json-render/core` . This `catalog` specifies the components with their typed props (using Zod schemas) and actions that the AI is allowed to use  .
+2.  **AI generates a spec**: Based on a natural language prompt, the AI generates a JSON `spec` . This `spec` is a flat tree of elements that adheres to the structure defined in your `catalog` .
+3.  **Your components render it**: You create a `registry` using `defineRegistry` (e.g., from `@json-render/react`) that maps the component types defined in your `catalog` to actual platform-specific component implementations  . This `registry` is then passed to a `Renderer` component, which takes the AI-generated `spec` and renders the UI using your defined components  .
+
+The framework supports various platforms through dedicated packages, such as `@json-render/react` for web UIs , `@json-render/react-native` for mobile , `@json-render/remotion` for video compositions , and `@json-render/react-pdf` for PDF documents .
+
+## DPV Key
+
+The term "DPV key" does not appear in the provided codebase context . It is possible this refers to a concept outside of this repository or is an acronym not explicitly defined within the available documentation .
+
+## Notes
+
+The codebase extensively uses `zod` for schema definition and type safety . The `Component Registry` wiki page provides a detailed explanation of how `defineRegistry` works, including type inference and component wrapping . The `README.md` and `apps/web/app/(main)/docs/page.mdx` files offer a high-level overview of the project's purpose and key concepts  . The `apps/web/app/api/docs-chat/route.ts` file shows an example of a documentation assistant that uses `json-render` and its tools .
+
+Wiki pages you might want to explore:
+- [Component Registry (vercel-labs/json-render)](/wiki/vercel-labs/json-render#3.4)
+
+View this search on DeepWiki: https://deepwiki.com/search/what-is-this-repository-about_20dac21a-146a-424e-b26b-5c9099854ed3
+

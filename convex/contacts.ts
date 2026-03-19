@@ -19,7 +19,7 @@ export const upsertExternalContact = internalMutation({
     if (!targetUser) {
       // Create stub user for the external agent
       const newUserId = await ctx.db.insert("users", {
-        name: args.name,
+        agentName: args.name,
         agentUrl: args.agentUrl,
         // No clerkId or handle for external users
       });

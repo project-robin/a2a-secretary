@@ -98,7 +98,14 @@ src/
     │   └── executor.ts                # Agent execution wrapper
     └── agent/
         ├── definition.ts              # ToolLoopAgent configuration
-        └── tools.ts                   # AI tool definitions (calendar, A2A)
+        ├── plugin-types.ts            # Interfaces for plugins and autonomy
+        └── plugins/                   # Modular agent capabilities
+            ├── index.ts               # Plugin registration
+            ├── a2a.ts                 # A2A protocol tools
+            ├── calendar.ts            # Calendar management
+            ├── tasks.ts               # Task management
+            ├── memory.ts              # Personal memory tools
+            └── autonomy.ts            # Permissions & User approval
 
 convex/
 ├── schema.ts                          # Database schema (users, calendarEvents)
@@ -187,6 +194,56 @@ Required for full functionality:
 - **Convex**: `convex` for real-time database and server functions
 - **OpenRouter**: `@openrouter/ai-sdk-provider` for LLM access
 - **Zod**: `zod` for schema validation in AI tools
+
+## A2A Protocol Reference
+
+The `refrence/` folder contains the complete A2A protocol documentation and samples. **Always consult this folder when working with A2A protocol implementation.**
+
+### Reference Folder Structure
+
+```
+refrence/
+├── a2a-js/                    # Official A2A JavaScript SDK (THIS IS THE ONE WE USE)
+│   ├── README.md              # Full SDK docs, quickstart, API reference
+│   ├── AGENTS.md              # SDK architecture and conventions
+│   ├── src/
+│   │   ├── client/            # ClientFactory, transports, interceptors
+│   │   ├── server/            # AgentExecutor, DefaultRequestHandler, task store
+│   │   │   └── express/       # Express integration handlers
+│   │   ├── samples/           # Working examples (agents, auth, CLI)
+│   │   └── types.ts           # Core protocol types (Message, Task, AgentCard)
+│   └── test/                  # SDK test suite
+└── a2a-samples/               # Multi-language samples
+    └── samples/js/            # JavaScript samples (USE THIS ONLY)
+```
+
+### Important: We Use JavaScript/TypeScript Only
+
+- **DO NOT** reference Python, Go, Java, or .NET samples from `a2a-samples/`
+- **DO NOT** use Python A2A SDK patterns or APIs
+- The `a2a-js` SDK (`@a2a-js/sdk`) is the **only** A2A implementation for this project
+- SDK implements A2A Protocol Spec **v0.3.0**
+
+### Key A2A JS SDK Concepts
+
+| Concept | Source | Description |
+|---------|--------|-------------|
+| `AgentCard` | `a2a-js/src/types.ts` | Agent identity and capabilities declaration |
+| `AgentExecutor` | `a2a-js/src/server/` | Interface to implement agent logic (`execute`, `cancelTask`) |
+| `ClientFactory` | `a2a-js/src/client/` | Creates clients to communicate with remote agents |
+| `ExecutionEventBus` | `a2a-js/src/server/` | Publishes `Message`, `Task`, `Artifact` events |
+| `DefaultRequestHandler` | `a2a-js/src/server/` | Orchestrates request processing and task management |
+| Transports | `a2a-js/src/client/` | JSON-RPC, HTTP+JSON/REST, gRPC |
+
+### When to Consult Reference
+
+- Implementing A2A server endpoints → `refrence/a2a-js/README.md` (Server section)
+- Creating A2A clients for agent-to-agent calls → `refrence/a2a-js/README.md` (Client section)
+- Understanding protocol types → `refrence/a2a-js/src/types.ts`
+- Streaming responses → `refrence/a2a-js/README.md` (Streaming section)
+- Task cancellation → `refrence/a2a-js/README.md` (Handling Task Cancellation)
+- Push notifications → `refrence/a2a-js/README.md` (Push Notifications section)
+- Working agent examples → `refrence/a2a-js/src/samples/`
 
 ## Notes
 

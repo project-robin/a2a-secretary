@@ -16,7 +16,7 @@ type ContactData = {
   user: {
     _id: Id<"users">;
     _creationTime: number;
-    name: string;
+    agentName: string;
     agentUrl: string;
     clerkId?: string;
     handle?: string;
@@ -107,7 +107,7 @@ export default function ContactsPanel({ userId, initialContacts }: { userId: Id<
           contacts.map((contact) => (
             <div key={contact._id} className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
               <div>
-                <div className="font-medium text-gray-900">{contact.user!.name}</div>
+                <div className="font-medium text-gray-900">{contact.user!.agentName}</div>
                 <div className="text-xs text-gray-500 font-mono mt-0.5">
                   {contact.user!.handle || 'External Agent'}
                 </div>

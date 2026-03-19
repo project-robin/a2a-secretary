@@ -98,12 +98,21 @@ export const calendarPlugin: AgentPlugin = {
         }
 
         // Limit to 5 suggestions to avoid overwhelming the LLM
-        return freeSlots.slice(0, 5).map(s => ({
-          start: new Date(s.startTime).toISOString(),
-          end: new Date(s.endTime).toISOString(),
+        const slots = freeSlots.slice(0, 5).map(s => ({
+          date: new Date(s.startTime).toLocaleDateString(),
+          time: new Date(s.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          availability: 1.0,
           startUnix: s.startTime,
           endUnix: s.endTime
         }));
+
+        return JSON.stringify({
+          kind: "TimeProposal",
+          data: {
+            title: `Free slots for ${durationMinutes}m over the next ${searchDays} days`,
+            options: slots
+          }
+        });
       },
     }),
   },

@@ -16,12 +16,18 @@ export const send = mutation({
     userId: v.id("users"),
     role: v.string(),
     text: v.string(),
+    richContent: v.optional(v.string()),
+    metadata: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("messages", {
       userId: args.userId,
       role: args.role,
       text: args.text,
+      richContent: args.richContent,
+      metadata: args.metadata,
+      createdAt: args.createdAt || Date.now(),
     });
   },
 });

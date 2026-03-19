@@ -9,8 +9,11 @@
  */
 
 import type * as calendar from "../calendar.js";
+import type * as confirmations from "../confirmations.js";
 import type * as contacts from "../contacts.js";
+import type * as memory from "../memory.js";
 import type * as messages from "../messages.js";
+import type * as tasks from "../tasks.js";
 
 import type {
   ApiFromModules,
@@ -20,8 +23,11 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   calendar: typeof calendar;
+  confirmations: typeof confirmations;
   contacts: typeof contacts;
+  memory: typeof memory;
   messages: typeof messages;
+  tasks: typeof tasks;
 }>;
 
 /**

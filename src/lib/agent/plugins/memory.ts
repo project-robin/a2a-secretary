@@ -23,7 +23,14 @@ const remember = tool({
     if (!userId) throw new Error("userId not found in execution context");
     const convex = getConvexClient();
     await convex.mutation(api.memory.upsert, { userId, ...input } as any);
-    return { success: true, key: input.key };
+    return JSON.stringify({
+      kind: "MemoryCard",
+      data: {
+        key: input.key,
+        value: input.value,
+        source: input.source
+      }
+    });
   },
 });
 

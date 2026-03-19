@@ -60,34 +60,78 @@ export async function POST(
 
     if (body.method === "message/send") {
       const incomingMessage = body.params.message;
-      const text = incomingMessage.parts
-        .map((p: { text?: string }) => p.text || "")
+
+      // Extract sender info from DataParts to pass as mentioned contacts
+      const senderMetadata = incomingMessage.parts.find((p: any) => p.kind === "data" && p.data?.kind === "sender_metadata")?.data;
+      const mentionedContacts = senderMetadata ? [{
+        name: senderMetadata.name,
+        handle: senderMetadata.handle,
+        agentUrl: senderMetadata.agentUrl
+      }] : undefined;
+
+      // Use the full parts array for the agent to process
+      const { text: resultText, richContent } = await executeAgent(
+        user._id,
+        incomingMessage.parts,
+        mentionedContacts,
+        undefined,
+        {
+          agentName: (user as any).agentName || "Assistant",
+          agentBio: (user as any).agentBio || "A helpful personal agent",
+          agentTone: ((user as any).agentTone || "casual") as "casual" | "formal" | "friendly",
+        }
+      );
+
+      // For display in the local UI, we still want a text representation of what the remote agent sent
+      let incomingRichContent = undefined;
+      const incomingText = incomingMessage.parts
+        .map((p: any) => {
+          if (p.kind === "text") return p.text;
+          if (p.kind === "data") {
+            // If it's not sender_metadata, treat it as richContent for the UI
+            if (p.data?.kind !== "sender_metadata") {
+              incomingRichContent = JSON.stringify(p.data);
+            }
+            return `[Data]: ${JSON.stringify(p.data)}`;
+          }
+          return `[${p.kind}]`;
+        })
         .join("\n")
         .trim();
 
-      console.log(`[A2A] Incoming message for ${user.agentName} (${user._id}): "${text}"`);
+      console.log(`[A2A] Incoming message for ${user.agentName} (${user._id}): "${incomingText}"`);
 
       // Store the incoming message from the remote agent
       await convex.mutation(api.messages.send, {
         userId: user._id,
         role: "remote_agent",
-        text: `[Remote Agent]: ${text}`,
+        text: `[Remote Agent]: ${incomingText}`,
+        richContent: incomingRichContent,
       });
 
-      const persona = {
-        agentName: (user as any).agentName || "Assistant",
-        agentBio: (user as any).agentBio || "A helpful personal agent",
-        agentTone: ((user as any).agentTone || "casual") as "casual" | "formal" | "friendly",
-      };
-
-      const result = await executeAgent(user._id, text, undefined, undefined, persona);
-
-      // Store our agent's reply
+      // Store our agent's reply in Convex (for the local UI)
       await convex.mutation(api.messages.send, {
         userId: user._id,
         role: "assistant",
-        text: result,
+        text: resultText,
+        richContent,
       });
+
+      const parts: any[] = [{ kind: "text", text: resultText }];
+      if (richContent) {
+        try {
+          const parsed = JSON.parse(richContent);
+          // Don't leak internal confirmation requests to the remote agent
+          if (parsed.kind !== "ConfirmationCard") {
+            parts.push({
+              kind: "data",
+              data: parsed
+            });
+          }
+        } catch (e) {
+          console.error("Failed to parse richContent for A2A DataPart:", e);
+        }
+      }
 
       return NextResponse.json({
         jsonrpc: "2.0",
@@ -96,7 +140,7 @@ export async function POST(
             kind: "message",
             role: "agent",
             messageId: crypto.randomUUID(),
-            parts: [{ kind: "text", text: result }],
+            parts,
           }
         },
         id: body.id,

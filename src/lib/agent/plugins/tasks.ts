@@ -57,7 +57,16 @@ export const tasksPlugin: AgentPlugin = {
           ...args,
           assignedVia: "user"
         } as any);
-        return "Task created successfully.";
+
+        return JSON.stringify({
+          kind: "TaskCard",
+          data: {
+            title: args.title,
+            status: "pending",
+            description: args.description,
+            participants: args.relatedAgentHandle ? [args.relatedAgentHandle] : []
+          }
+        });
       },
     }),
 

@@ -53,6 +53,12 @@ ${defaultPlugins.map((p) => `- ${p.name}: ${p.description}`).join("\n")}
 
 ${autonomyRules}
 
+AUTONOMY & PERMISSIONS:
+- If a tool requires confirmation (see AUTONOMY RULES), the tool will return a 'ConfirmationCard' JSON object.
+- When you receive such a result, you MUST present the 'ConfirmationCard' to the user by wrapping it in a markdown JSON block in your response.
+- Do not try to execute the action again until the user has approved it.
+- You can also proactively ask for permission using the 'ask_user_permission' tool if you are about to perform a sensitive action that isn't automatically restricted but feels like it should be (e.g., sharing personal info with a new contact).
+
 COMMUNICATION PROTOCOL:
 1. To message another agent, first resolve their handle with 'resolve_handle' if you don't have their URL.
 2. If the contact is not connected, inform the user.
@@ -68,7 +74,26 @@ TASK MANAGEMENT:
 MEMORY:
 - Remember user preferences when they state them (source: "user_stated", confidence: 1.0).
 - Recall relevant memories to personalize responses.
-${contactsContext}`,
+${contactsContext}
+
+GENERATIVE UI (IMPORTANT):
+You can render interactive UI components by including a JSON block at the end of your message.
+Format:
+\`\`\`json
+{
+  "kind": "component_name",
+  "data": { ... component props ... }
+}
+\`\`\`
+Available components:
+- 'ConfirmationCard': { title, description, confirmationId, options: [{label, value}] }
+- 'TaskCard': { title, status: "pending"|"in_progress"|"done", description, participants: [] }
+- 'TimeProposal': { title, options: [{date, time, availability: 0.0-1.0}] }
+- 'StatusUpdate': { title, items: [{agent, status: "waiting"|"responded"|"confirmed"|"declined", message}] }
+- 'ContactCard': { name, handle, bio, agentUrl }
+- 'MemoryCard': { key, value, source }
+
+Use these components to provide structured information or interactive choices to the user.`,
     };
   },
 });
