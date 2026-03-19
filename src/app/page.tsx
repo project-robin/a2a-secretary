@@ -5,7 +5,7 @@ import { useQuery, useMutation, Authenticated, Unauthenticated, AuthLoading } fr
 import { api } from "../../convex/_generated/api";
 import { User, UserSwitcher } from "@/components/UserSwitcher";
 import ContactsPanel from "@/components/ContactsPanel";
-import { JSONRenderer } from "@/components/json-render/Renderer";
+import { AgentRenderer } from "@/lib/json-render/registry";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import {
   Calendar as CalendarIcon,
@@ -375,9 +375,8 @@ export default function Home() {
                             try {
                               const rich = JSON.parse(msg.richContent);
                               return (
-                                <JSONRenderer
-                                  kind={rich.kind}
-                                  data={rich.data}
+                                <AgentRenderer
+                                  spec={rich}
                                   onAction={(action, params) => {
                                     if (action === "onConfirm") {
                                       handleSendMessage(`I choose: ${params.value}`);
