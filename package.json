@@ -11,6 +11,8 @@
   "dependencies": {
     "@a2a-js/sdk": "^0.3.0",
     "@clerk/nextjs": "^7.0.4",
+    "@json-render/core": "^0.14.1",
+    "@json-render/react": "^0.14.1",
     "@openrouter/ai-sdk-provider": "^2.3.0",
     "ai": "^6.0.116",
     "convex": "^1.32.0",
