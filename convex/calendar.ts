@@ -132,44 +132,19 @@ export const createUserForClerk = mutation({
   },
 });
 
-export const fixSeededUsers = mutation({
-  args: {},
-  handler: async (ctx: any) => {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
-    const users = await ctx.db.query("users").collect();
-    for (const user of users) {
-      if (user.agentName === "Alice" || user.agentName === "Bob") {
-        await ctx.db.patch(user._id, {
-          agentUrl: `${baseUrl}/api/a2a/${user._id}`,
-        });
-      }
-    }
+export const updatePersona = mutation({
+  args: {
+    userId: v.id("users"),
+    agentName: v.string(),
+    agentBio: v.string(),
+    agentTone: v.string(),
+  },
+  handler: async (ctx: any, { userId, agentName, agentBio, agentTone }: any) => {
+    await ctx.db.patch(userId, {
+      agentName,
+      agentBio,
+      agentTone,
+    });
   },
 });
 
-export const seedUsers = mutation({
-  args: {},
-  handler: async (ctx: any) => {
-    const existingUsers = await ctx.db.query("users").collect();
-    if (existingUsers.length === 0) {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
-      const aliceId = await ctx.db.insert("users", {
-        agentName: "Alice",
-        handle: "ALICE1",
-        agentUrl: "placeholder",
-        createdAt: Date.now(),
-      });
-      await ctx.db.patch(aliceId, { agentUrl: `${baseUrl}/api/a2a/${aliceId}` });
-
-      const bobId = await ctx.db.insert("users", {
-        agentName: "Bob",
-        handle: "BOB001",
-        agentUrl: "placeholder",
-        createdAt: Date.now(),
-      });
-      await ctx.db.patch(bobId, { agentUrl: `${baseUrl}/api/a2a/${bobId}` });
-
-      return { aliceId, bobId };
-    }
-  },
-});

@@ -12,6 +12,9 @@ export type User = {
   name: string;
   agentUrl: string;
   handle: string;
+  agentName?: string;
+  agentBio?: string;
+  agentTone?: string;
 };
 
 export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => void }) {

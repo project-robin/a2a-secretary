@@ -41,6 +41,7 @@ const askUserPermission = tool({
         title: "Permission Requested",
         description,
         confirmationId,
+        tool: toolName,
         options: [
           { label: "Approve", value: "approved" },
           { label: "Reject", value: "rejected" }
