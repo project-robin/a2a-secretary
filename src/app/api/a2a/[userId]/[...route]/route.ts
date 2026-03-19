@@ -22,12 +22,18 @@ export async function GET(
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://a2a-secretary.vercel.app";
     const jsonrpcUrl = `${baseUrl}/api/a2a/${userId}/jsonrpc`;
     return NextResponse.json({
-      name: `${user.name}'s Secretary`,
-      description: `A2A Personal Secretary for ${user.name}`,
+      name: (user as any).agentName || (user as any).name || "Agent",
+      description: (user as any).agentBio || `Personal AI agent for ${(user as any).agentName || (user as any).name}`,
       url: jsonrpcUrl,
       endpoints: {
         jsonrpc: jsonrpcUrl,
       },
+      skills: [
+        { id: "calendar", name: "Calendar Management" },
+        { id: "tasks", name: "Task Management" },
+        { id: "memory", name: "Memory & Preferences" },
+        { id: "coordination", name: "Group Coordination" },
+      ],
     });
   }
 
@@ -59,7 +65,7 @@ export async function POST(
         .join("\n")
         .trim();
 
-      console.log(`[A2A] Incoming message for ${user.name} (${user._id}): "${text}"`);
+      console.log(`[A2A] Incoming message for ${user.agentName} (${user._id}): "${text}"`);
 
       // Store the incoming message from the remote agent
       await convex.mutation(api.messages.send, {
@@ -68,7 +74,13 @@ export async function POST(
         text: `[Remote Agent]: ${text}`,
       });
 
-      const result = await executeAgent(user._id, text);
+      const persona = {
+        agentName: (user as any).agentName || "Assistant",
+        agentBio: (user as any).agentBio || "A helpful personal agent",
+        agentTone: ((user as any).agentTone || "casual") as "casual" | "formal" | "friendly",
+      };
+
+      const result = await executeAgent(user._id, text, undefined, undefined, persona);
 
       // Store our agent's reply
       await convex.mutation(api.messages.send, {

@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { message, mentionedContacts } = await request.json();
+  const { message, mentionedContacts, approvedTools } = await request.json();
   if (!message) {
     return NextResponse.json({ error: "message is required" }, { status: 400 });
   }
@@ -25,7 +25,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
 
-  const text = await executeAgent(user._id, message, mentionedContacts);
+  const persona = {
+    agentName: (user as any).agentName || "Assistant",
+    agentBio: (user as any).agentBio || "A helpful personal agent",
+    agentTone: ((user as any).agentTone || "casual") as "casual" | "formal" | "friendly",
+  };
+
+  const text = await executeAgent(
+    user._id,
+    message,
+    mentionedContacts,
+    approvedTools,
+    persona
+  );
 
   // Save the assistant's reply to the database
   await convex.mutation(api.messages.send, {
