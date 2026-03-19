@@ -22,21 +22,21 @@ export function AgentProfileBar({ user }: AgentProfileBarProps) {
   };
 
   return (
-    <div className="h-20 border-b border-stone-200 bg-white/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-stone-900 rounded-2xl flex items-center justify-center shadow-lg shadow-stone-900/10">
-          <ShieldCheck className="w-6 h-6 text-white" />
+    <div className="h-20 border-b border-stone-200 bg-white/80 backdrop-blur-md px-4 md:px-6 flex items-center justify-between sticky top-0 z-50">
+      <div className="flex items-center gap-3 md:gap-4 overflow-hidden">
+        <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-stone-900 rounded-2xl flex items-center justify-center shadow-lg shadow-stone-900/10">
+          <ShieldCheck className="w-5 h-5 md:w-6 md:h-6 text-white" />
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="font-display font-black text-xl text-stone-900 tracking-tight">
+            <h1 className="font-display font-black text-lg md:text-xl text-stone-900 tracking-tight truncate">
               {user.agentName}
             </h1>
-            <span className="font-mono text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">
+            <span className="hidden sm:inline font-mono text-[10px] text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full font-bold">
               {user.handle || "NO-HANDLE"}
             </span>
           </div>
-          <p className="text-stone-500 text-xs font-medium truncate max-w-[300px]">
+          <p className="text-stone-500 text-[10px] md:text-xs font-medium truncate">
             {user.agentBio || "Your personal AI agent"}
           </p>
         </div>

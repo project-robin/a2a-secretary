@@ -1,0 +1,28 @@
+
+> personal-secretary-impl@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+
+✓ Starting...
+✓ Ready in 1336ms
+○ Compiling / ...
+
+[35m
+[Clerk]:[0m You are running in keyless mode.
+You can [35mclaim your keys[0m by visiting https://dashboard.clerk.com/apps/claim?framework=nextjs&token=jfm618ex55c2aobkgf2tvkf23orcewaoxikh1df8&return_url=http%3A%2F%2Flocalhost%3A3000%2F
+
+ GET / 200 in 9.3s (compile: 7.9s, proxy.ts: 255ms, render: 1126ms)
+ GET / 200 in 142ms (compile: 6ms, proxy.ts: 36ms, render: 100ms)
+ POST / 303 in 257ms (compile: 8ms, proxy.ts: 34ms, render: 216ms)
+ GET / 200 in 52ms (compile: 7ms, proxy.ts: 22ms, render: 24ms)
+ GET / 200 in 81ms (compile: 6ms, proxy.ts: 6ms, render: 69ms)
+ GET / 200 in 68ms (compile: 5ms, proxy.ts: 11ms, render: 51ms)
+ POST / 303 in 120ms (compile: 4ms, proxy.ts: 5ms, render: 111ms)
+ GET / 200 in 34ms (compile: 4ms, proxy.ts: 13ms, render: 17ms)
+ GET / 200 in 842ms (compile: 431ms, proxy.ts: 11ms, render: 401ms)
+ GET / 200 in 72ms (compile: 5ms, proxy.ts: 16ms, render: 50ms)
+ POST / 303 in 138ms (compile: 5ms, proxy.ts: 18ms, render: 115ms)
+ GET / 200 in 50ms (compile: 5ms, proxy.ts: 13ms, render: 32ms)

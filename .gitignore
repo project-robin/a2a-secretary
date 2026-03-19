@@ -57,3 +57,6 @@ scripts/
 deepwiki-cli.py
 CLAUDE.md
 .worktrees/
+
+# clerk configuration (can include secrets)
+/.clerk/
