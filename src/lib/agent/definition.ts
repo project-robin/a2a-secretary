@@ -1,46 +1,77 @@
 import { ToolLoopAgent } from "ai";
 import { openrouter } from "@openrouter/ai-sdk-provider";
-import { checkCalendar, addMeeting, contactRemoteAgent, resolveContactUrl, getContacts, getAgentCard } from "./tools";
+import { defaultPlugins } from "./plugins";
+import { mergePluginTools, buildAutonomyPrompt, AgentPersona } from "./plugin-types";
 
-// Define call options type for dynamic context injection
-interface SecretaryCallOptions {
+interface AgentCallOptions {
   userId: string;
-  mentionedContacts?: Array<{name: string, handle: string, agentUrl: string}>;
+  persona?: AgentPersona;
+  mentionedContacts?: Array<{ name: string; handle: string; agentUrl: string }>;
+  approvedTools?: string[];
 }
 
-export const secretaryAgent = new ToolLoopAgent<SecretaryCallOptions>({
+const allTools = mergePluginTools(defaultPlugins);
+
+export const personalAgent = new ToolLoopAgent<AgentCallOptions>({
   model: openrouter("openrouter/healer-alpha"),
-  tools: {
-    check_calendar: checkCalendar,
-    add_meeting: addMeeting,
-    contact_remote_agent: contactRemoteAgent,
-    resolve_contact_url: resolveContactUrl,
-    get_contacts: getContacts,
-    get_agent_card: getAgentCard,
-  },
-  // Inject userId from options into experimental_context for tool access
+  tools: allTools,
   prepareCall: ({ options, ...rest }) => {
+    const persona = options.persona || {
+      agentName: "Assistant",
+      agentBio: "A helpful personal agent",
+      agentTone: "casual" as const,
+    };
+
     const contactsContext = options.mentionedContacts?.length
-      ? `\n\nMENTIONED CONTACTS (You have access to the user's explicit contact mentions for this task):\n${options.mentionedContacts.map(c => `- ${c.name} (Handle: ${c.handle}, URL: ${c.agentUrl})`).join('\n')}\n\nWhen the user mentions a name (e.g., '@Alice'), look up their details in the 'MENTIONED CONTACTS' list above and use their specific A2A URL or handle with your tools. Do not guess URLs.`
-      : '';
+      ? `\n\nMENTIONED CONTACTS:\n${options.mentionedContacts
+          .map((c) => `- ${c.name} (Handle: ${c.handle}, URL: ${c.agentUrl})`)
+          .join("\n")}\n\nWhen the user mentions a name (e.g., '@Alice'), look up their details above and use their A2A URL or handle with your tools.`
+      : "";
+
+    const toneGuide = {
+      casual: "Be conversational, warm, and use natural language.",
+      formal: "Be professional, precise, and structured.",
+      friendly: "Be enthusiastic, supportive, and encouraging.",
+    };
+
+    const autonomyRules = buildAutonomyPrompt(defaultPlugins);
 
     return {
       ...rest,
-      experimental_context: { userId: options.userId },
-      instructions: `ACT AS A HEADLESS API.
+      experimental_context: {
+        userId: options.userId,
+        approvedTools: options.approvedTools,
+      },
+      instructions: `You are ${persona.agentName}, a personal AI agent.
+Bio: ${persona.agentBio}
+Tone: ${toneGuide[persona.agentTone]}
 
-STRICT PROTOCOL FOR MESSAGING:
-1. IF YOU NEED TO MESSAGE ANOTHER USER AND YOU DO NOT HAVE THEIR A2A URL, YOU MUST FIRST CALL 'resolve_contact_url' WITH THEIR 6-CHARACTER HANDLE (e.g. "XK9MP2").
-2. EXAMINE THE RESPONSE. IF 'connected' IS FALSE, YOU MUST NOT SEND A MESSAGE. INSTEAD, TELL THE USER "I cannot send a message because the connection with this user is pending or not established. Both of you must add each other's handles."
-3. ONLY IF 'connected' IS TRUE AND YOU GOT THE 'agentUrl' (OR IF YOU ALREADY HAVE THEIR agentUrl FROM THE MENTIONED CONTACTS), CALL 'contact_remote_agent' USING THAT EXACT URL.
-4. NEVER GUESS OR HALLUCINATE URLs (e.g., NO "a2a://", NO ".agent").
-5. HANDLES ARE 6-CHARACTER ALPHANUMERIC CODES. IF GIVEN A NAME INSTEAD, ASK THE USER FOR THEIR HANDLE UNLESS THEY ARE IN THE MENTIONED CONTACTS LIST.${contactsContext}
+You serve your owner by managing tasks, remembering preferences, coordinating with other agents, and managing their schedule. You are their digital representative.
 
-OTHER TOOLS:
-- IF THE USER SAYS "Check calendar", CALL 'check_calendar'.
-- IF YOU AGREE ON A MEETING, CALL 'add_meeting'.
+CAPABILITIES:
+${defaultPlugins.map((p) => `- ${p.name}: ${p.description}`).join("\n")}
 
-DO NOT GREET. DO NOT TALK. ONLY CALL TOOLS.`,
+${autonomyRules}
+
+COMMUNICATION PROTOCOL:
+1. To message another agent, first resolve their handle with 'resolve_handle' if you don't have their URL.
+2. If the contact is not connected, inform the user.
+3. Only use 'contact_agent' with verified URLs from 'resolve_handle' or MENTIONED CONTACTS.
+4. Never guess or hallucinate URLs.
+5. Handles are 6-character alphanumeric codes.
+
+TASK MANAGEMENT:
+- When the user asks you to do something involving coordination, create a task to track it.
+- Update task status as work progresses.
+- Mark tasks done when complete.
+
+MEMORY:
+- Remember user preferences when they state them (source: "user_stated", confidence: 1.0).
+- Recall relevant memories to personalize responses.
+${contactsContext}`,
     };
   },
 });
+
+// Keep backward compat alias
+export const secretaryAgent = personalAgent;
