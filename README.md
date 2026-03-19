@@ -13,7 +13,7 @@ An AI-powered personal secretary that uses the **Agent-to-Agent (A2A)** protocol
 ## Tech Stack
 
 - **Framework**: Next.js 16 (App Router)
-- **AI**: Vercel AI SDK + OpenRouter (healer-alpha)
+- **AI**: Vercel AI SDK + OpenRouter (nvidia/nemotron-3-super-120b-a12b:free)
 - **Database**: Convex
 - **Auth**: Clerk
 - **Protocol**: @a2a-js/sdk

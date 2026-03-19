@@ -10,7 +10,7 @@ interface ContactsSidebarProps {
 }
 
 export function ContactsSidebar({ userId }: ContactsSidebarProps) {
-  const contacts = useQuery(api.contacts.getContacts, { ownerId: userId as any });
+  const contacts = useQuery(api.contacts.getContacts, userId ? { ownerId: userId as any } : "skip");
   const [isAdding, setIsAdding] = useState(false);
   const [handle, setHandle] = useState("");
 

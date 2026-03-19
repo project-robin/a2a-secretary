@@ -9,9 +9,9 @@ interface ContextPanelProps {
 }
 
 export function ContextPanel({ userId }: ContextPanelProps) {
-  const tasks = useQuery(api.tasks.list, { userId: userId as any });
-  const events = useQuery(api.calendar.getEvents, { userId: userId as any });
-  const memories = useQuery(api.memory.list, { userId: userId as any });
+  const tasks = useQuery(api.tasks.list, userId ? { userId: userId as any } : "skip");
+  const events = useQuery(api.calendar.getEvents, userId ? { userId: userId as any } : "skip");
+  const memories = useQuery(api.memory.list, userId ? { userId: userId as any } : "skip");
 
   return (
     <div className="w-80 border-l border-stone-200 bg-white flex flex-col h-full">

@@ -29,7 +29,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                    AI Agent Layer                            │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │           ToolLoopAgent (healer-alpha)               │    │
+│  │           ToolLoopAgent (nemotron-3-super-120b)      │    │
 │  │   Tools: check_calendar, add_meeting,                │    │
 │  │          contact_remote_agent, resolve_contact_url   │    │
 │  └─────────────────────────────────────────────────────┘    │
@@ -53,7 +53,7 @@
 | Styling | Tailwind CSS v4 |
 | Database | Convex |
 | Authentication | Clerk |
-| AI/LLM | AI SDK v6 + OpenRouter (healer-alpha) |
+| AI/LLM | AI SDK v6 + OpenRouter (nvidia/nemotron-3-super-120b-a12b:free) |
 | Agent Protocol | @a2a-js/sdk |
 | Type Safety | TypeScript 5 |
 

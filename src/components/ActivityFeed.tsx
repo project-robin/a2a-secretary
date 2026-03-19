@@ -10,8 +10,8 @@ interface ActivityFeedProps {
 }
 
 export function ActivityFeed({ userId, onResolve }: ActivityFeedProps) {
-  const pendingConfirmations = useQuery(api.confirmations.listPending, { userId: userId as any });
-  const recentMessages = useQuery(api.messages.list, { userId: userId as any });
+  const pendingConfirmations = useQuery(api.confirmations.listPending, userId ? { userId: userId as any } : "skip");
+  const recentMessages = useQuery(api.messages.list, userId ? { userId: userId as any } : "skip");
 
   // Filter for system or A2A messages
   const notifications = recentMessages?.filter(m =>

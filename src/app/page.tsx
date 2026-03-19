@@ -279,7 +279,7 @@ export default function Home() {
           {currentUser && !currentUser.agentBio && (
             <OnboardingModal
               userId={currentUser._id}
-              initialName={currentUser.name}
+              initialName={currentUser.agentName}
               onComplete={() => {
                 // The Convex query in UserSwitcher will automatically update
                 // and propagate the new user data via onUserChange.

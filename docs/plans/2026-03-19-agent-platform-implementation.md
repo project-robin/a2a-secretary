@@ -1031,7 +1031,7 @@ interface AgentCallOptions {
 const allTools = mergePluginTools(defaultPlugins);
 
 export const personalAgent = new ToolLoopAgent<AgentCallOptions>({
-  model: openrouter("openrouter/healer-alpha"),
+  model: openrouter("nvidia/nemotron-3-super-120b-a12b:free"),
   tools: allTools,
   prepareCall: ({ options, ...rest }) => {
     const persona = options.persona || {

@@ -9,10 +9,9 @@ import { useState, useEffect } from "react";
 
 export type User = {
   _id: Id<"users">;
-  name: string;
+  agentName: string;
   agentUrl: string;
   handle: string;
-  agentName?: string;
   agentBio?: string;
   agentTone?: string;
 };
@@ -43,9 +42,8 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
     }
   }, [isLoaded, clerkUser, convexUser, createUser]);
 
-  // Notify parent component of current user when loaded
   useEffect(() => {
-    if (convexUser && typeof convexUser === "object" && "_id" in convexUser && "name" in convexUser && "agentUrl" in convexUser && "handle" in convexUser) {
+    if (convexUser && typeof convexUser === "object" && "_id" in convexUser && "agentName" in convexUser && "agentUrl" in convexUser && "handle" in convexUser) {
       onUserChange(convexUser as User);
     }
   }, [convexUser, onUserChange]);
@@ -107,10 +105,10 @@ export function UserSwitcher({ onUserChange }: { onUserChange: (user: User) => v
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-white border border-stone-200 p-6 rounded-3xl shadow-xl shadow-stone-200/50">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-full bg-stone-900 text-white flex items-center justify-center font-display font-bold text-xl shadow-inner">
-            {convexUser.name.charAt(0)}
+            {(convexUser.agentName || "A").charAt(0)}
           </div>
           <div className="text-left">
-            <p className="font-display font-bold tracking-tight text-lg text-stone-800">{convexUser.name}</p>
+            <p className="font-display font-bold tracking-tight text-lg text-stone-800">{convexUser.agentName}</p>
             <p className="text-xs font-medium text-stone-500">
               {clerkUser.primaryEmailAddress?.emailAddress}
             </p>
